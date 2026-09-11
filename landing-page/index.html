@@ -3,23 +3,16 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ZENITH — Attack Path & Identity Privilege Graph Analyzer</title>
+<title>ZENITH — Identity Privilege Graph & Attack Path Analyzer</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-<link href="https://db.onlinewebfonts.com/c/8cb707a9b8a73f8a7403336b861c3074?family=BubbledotICG-FinePos" rel="stylesheet" />
-<link
-  rel="stylesheet"
-  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-  integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
-  crossorigin="anonymous"
-  referrerpolicy="no-referrer"
-/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
+<!-- Ambient Video Background -->
 <div class="bg">
   <video class="bg-video" autoplay muted loop playsinline>
     <source
@@ -27,83 +20,338 @@
       type="video/mp4"
     />
   </video>
+  <div class="bg-overlay"></div>
 </div>
 
 <div class="page">
 
-  <header class="site-header anim" style="--d:0s">
-    <a class="logo" href="#">
-      <img src="assets/logo.webp" width="52" height="52" alt="ZENITH Logo" />
+  <!-- Sticky Header -->
+  <header class="site-header">
+    <a class="logo" href="#hero">
+      <img src="assets/logo.webp" alt="ZENITH Logo" />
+      <span class="logo-text">ZENITH</span>
     </a>
 
     <nav class="nav-pill" aria-label="Primary">
-      <a href="#" class="nav-link active">Home</a>
-      <a href="http://localhost:5173" class="nav-link" target="_blank">Attack Graph</a>
-      <a href="../CONTEXT.md" class="nav-link" target="_blank">Architecture</a>
-      <a href="https://github.com/Conqueror17-AALOK/ZENITH-.git" class="nav-link" target="_blank">GitHub</a>
+      <a href="#hero" class="nav-link active">Home</a>
+      <a href="#simulator" class="nav-link">Simulator</a>
+      <a href="#capabilities" class="nav-link">Capabilities</a>
+      <a href="#calculator" class="nav-link">Risk Calculator</a>
+      <a href="#faq" class="nav-link">FAQ</a>
     </nav>
 
-    <a href="http://localhost:5173" class="signin-pill" target="_blank">Launch App</a>
-
-    <button class="burger" id="burger" aria-expanded="false" aria-controls="mobile-menu" aria-label="Menu">
-      <span></span><span></span><span></span>
-    </button>
+    <a href="http://localhost:5173" class="launch-btn" target="_blank">
+      Launch App &rarr;
+    </a>
   </header>
 
-  <main class="hero">
-    <div class="trust-row anim" style="--d:0.05s">
-      <div class="avatar a1"><span class="avatar-ring"><span class="avatar-inner"><i class="fa-brands fa-microsoft"></i></span></span></div>
-      <div class="avatar a2"><span class="avatar-ring"><span class="avatar-inner"><i class="fa-brands fa-amazon"></i></span></span></div>
-      <div class="avatar a3"><span class="avatar-ring"><span class="avatar-inner"><i class="fa-brands fa-google"></i></span></span></div>
-      <div class="trust-pill">Kurukshetra 2.0 • Domain 2: Cyber & Blockchain</div>
+  <!-- Hero Section -->
+  <main class="section hero" id="hero">
+    <div class="trust-pill">
+      <span style="color: var(--accent-cyan);">●</span> Kurukshetra 2.0 • Domain 2: Cyber & Blockchain (Expert Tier)
     </div>
 
     <h1 class="headline">
-      <span class="hline hline1" style="--d:0.12s">ZENITH</span>
-      <span class="hline hline2" style="--d:0.3s">Attack Path Intelligence</span>
+      Preempt Multi-Hop Attack Paths <br />
+      <span class="cyan">Before Adversaries Find Them.</span>
     </h1>
 
-    <p class="subhead anim" style="--d:0.28s">
-      Mathematically expose multi-hop Active Directory & Cloud IAM privilege escalation
-      routes before adversaries exploit them. Real Cypher graph algorithms, zero black-box guessing.
+    <p class="subhead">
+      ZENITH models enterprise identities in Neo4j and computes deterministic privilege escalation
+      chains using real Cypher graph traversals—mathematical certainty over speculative guesswork.
     </p>
 
-    <a href="http://localhost:5173" class="cta anim reveal-pulse" style="--d:0.4s" target="_blank">Launch Console</a>
+    <div class="hero-actions">
+      <a href="http://localhost:5173" class="cta-primary" target="_blank">
+        Launch Live Console &rarr;
+      </a>
+      <a href="#simulator" class="cta-secondary">
+        Try Interactive Simulator
+      </a>
+    </div>
+
+    <!-- Live Animated Metrics -->
+    <div class="stats">
+      <div class="stat" data-target="45" data-suffix="ms" data-prefix="< ">
+        <div class="stat-value"><span class="pre">&lt; </span><span class="num">0</span><span class="suf">ms</span></div>
+        <div class="stat-label">Graph Traversal</div>
+      </div>
+      <div class="stat" data-target="100" data-suffix="%">
+        <div class="stat-value"><span class="num">0</span><span class="suf">%</span></div>
+        <div class="stat-label">Deterministic Cypher</div>
+      </div>
+      <div class="stat" data-target="1" data-suffix="-Click">
+        <div class="stat-value"><span class="num">0</span><span class="suf">-Click</span></div>
+        <div class="stat-label">Chokepoint Remediation</div>
+      </div>
+      <div class="stat" data-target="129" data-suffix="+">
+        <div class="stat-value"><span class="num">0</span><span class="suf">+</span></div>
+        <div class="stat-label">Enterprise Identities</div>
+      </div>
+    </div>
   </main>
 
-  <footer class="stats">
-    <div class="stat anim" style="--d:0.5s" data-target="45" data-suffix="ms" data-decimals="0">
-      <div class="stat-icon">&lt;</div>
-      <div class="stat-value"><span class="num">0</span><span class="suf"></span></div>
-      <div class="stat-label">Graph Traversal</div>
+  <!-- Section 1: Interactive Simulator Widget -->
+  <section class="section" id="simulator">
+    <div class="section-tag">Interactive Preview</div>
+    <h2 class="section-title">Test Attack Paths & Chokepoint Severing Live</h2>
+    <p class="section-subtitle">
+      Explore how individual permissions chain into multi-hop lateral movement, then simulate
+      cutting the chokepoint to eliminate the path.
+    </p>
+
+    <div class="simulator-card">
+      <div class="sim-tabs">
+        <button class="sim-tab-btn active" data-scenario="rdp">
+          Scenario 1: LSASS Credential Theft (RDP)
+        </button>
+        <button class="sim-tab-btn" data-scenario="gpo">
+          Scenario 2: Group Policy ACL Takeover
+        </button>
+        <button class="sim-tab-btn" data-scenario="kerb">
+          Scenario 3: Active Directory Kerberoasting
+        </button>
+      </div>
+
+      <div class="sim-workspace">
+        <div class="sim-path-visual">
+          <div style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
+            ATTACK CHAIN PROGRESSION
+          </div>
+          <div class="sim-chain" id="sim-chain-container">
+            <!-- Dynamically populated via JS -->
+          </div>
+
+          <div id="sim-remedy-message" style="margin-top: 14px; padding: 12px; border-radius: 8px; font-size: 12px; display: none;">
+            <!-- Remediation feedback -->
+          </div>
+        </div>
+
+        <div class="sim-telemetry">
+          <div>
+            <div class="sim-risk-header">
+              <span style="font-weight: 700; font-size: 13px;">RISK ASSESSMENT</span>
+              <span id="sim-risk-badge" class="badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 11px;">
+                CRITICAL THREAT
+              </span>
+            </div>
+            <div class="sim-gauge-bar">
+              <div class="sim-gauge-fill" id="sim-gauge-fill" style="width: 78%;"></div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; font-size: 12px;">
+              <div style="background: #090d15; padding: 8px; border-radius: 6px;">
+                <div style="color: var(--text-dim); font-size: 10px;">TOTAL HOPS</div>
+                <div style="font-weight: 700; font-size: 15px; color: #fff;" id="sim-hops-val">3</div>
+              </div>
+              <div style="background: #090d15; padding: 8px; border-radius: 6px;">
+                <div style="color: var(--text-dim); font-size: 10px;">EXPLOIT COST</div>
+                <div style="font-weight: 700; font-size: 15px; color: #fff;" id="sim-cost-val">9</div>
+              </div>
+            </div>
+
+            <div style="font-size: 11px; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px;" id="sim-desc-val">
+              Attacker leverages low-privilege RDP access, extracts cached credentials of a backup account, and forces a password reset on Domain Admins.
+            </div>
+          </div>
+
+          <button class="sim-choke-toggle" id="sim-choke-btn">
+            ⚡ Sever Chokepoint Privilege
+          </button>
+        </div>
+      </div>
     </div>
-    <div class="stat anim" style="--d:0.58s" data-target="100" data-suffix="%" data-decimals="0">
-      <div class="stat-icon">%</div>
-      <div class="stat-value"><span class="num">0</span><span class="suf"></span></div>
-      <div class="stat-label">Deterministic Cypher</div>
+  </section>
+
+  <!-- Section 2: Enterprise Capabilities -->
+  <section class="section" id="capabilities">
+    <div class="section-tag">Core Architecture</div>
+    <h2 class="section-title">Engineered for Mathematical Certainty</h2>
+    <p class="section-subtitle">
+      Traditional security tools inspect identities in isolation. ZENITH analyzes the interconnected
+      privilege graph to surface emergent lateral movement routes.
+    </p>
+
+    <div class="bento-grid">
+      <div class="bento-card">
+        <div>
+          <div class="bento-icon">⛯</div>
+          <h3>Deterministic Cypher Pathfinding</h3>
+          <p>
+            Executes Dijkstra-weighted shortest-path traversals across millions of edges in milliseconds.
+            Evaluates empirical exploit difficulty weights rather than crude hop counting.
+          </p>
+        </div>
+        <div style="font-family: var(--font-mono); font-size: 11px; color: var(--accent-cyan); margin-top: 20px;">
+          MATCH p = (start)-[*1..6]-&gt;(end)
+        </div>
+      </div>
+
+      <div class="bento-card">
+        <div>
+          <div class="bento-icon">💥</div>
+          <h3>Downstream Blast Radius Modeling</h3>
+          <p>
+            Quantifies the complete reachability cascade if an account or machine is compromised.
+            Instantly flags exposure of Tier-0 Domain Controllers and executive assets.
+          </p>
+        </div>
+        <div style="font-family: var(--font-mono); font-size: 11px; color: var(--accent-amber); margin-top: 20px;">
+          TRANSITIVE REACHABILITY CASCADE
+        </div>
+      </div>
+
+      <div class="bento-card">
+        <div>
+          <div class="bento-icon">⚡</div>
+          <h3>1-Click Chokepoint Remediation</h3>
+          <p>
+            Simulates revoking any individual privilege in the graph live. Proves mathematically whether
+            severing that edge eliminates the attack chain or causes an alternate reroute.
+          </p>
+        </div>
+        <div style="font-family: var(--font-mono); font-size: 11px; color: var(--accent-emerald); margin-top: 20px;">
+          MINIMUM-CUT PRIVILEGE SEVERANCE
+        </div>
+      </div>
+
+      <div class="bento-card">
+        <div>
+          <div class="bento-icon">🛡️</div>
+          <h3>Decoupled Threat Narration</h3>
+          <p>
+            The graph engine computes the path; the decoupled LLM service translates the chain into an
+            executive security briefing with MITRE ATT&CK technique IDs and hardening playbooks.
+          </p>
+        </div>
+        <div style="font-family: var(--font-mono); font-size: 11px; color: var(--accent-purple); margin-top: 20px;">
+          MITRE ATT&CK: T1021, T1003, T1098
+        </div>
+      </div>
     </div>
-    <div class="stat anim" style="--d:0.66s" data-target="1" data-suffix="-Click" data-decimals="0">
-      <div class="stat-icon">*</div>
-      <div class="stat-value"><span class="num">0</span><span class="suf"></span></div>
-      <div class="stat-label">Chokepoint Remediation</div>
+  </section>
+
+  <!-- Section 3: Interactive Risk Calculator -->
+  <section class="section" id="calculator">
+    <div class="section-tag">Interactive Formula</div>
+    <h2 class="section-title">Explainable Risk Scoring Engine</h2>
+    <p class="section-subtitle">
+      Zero black-box neural metrics. Adjust path distance, exploit friction, and target criticality
+      to see ZENITH's transparent scoring model in action.
+    </p>
+
+    <div class="calc-card">
+      <div class="calc-sliders">
+        <div class="calc-group">
+          <label>
+            <span>LATERAL HOP COUNT</span>
+            <span id="calc-hops-display" style="font-family: var(--font-mono); color: var(--accent-cyan);">3 hops</span>
+          </label>
+          <input type="range" class="calc-slider" id="calc-hops-slider" min="1" max="6" value="3" />
+        </div>
+
+        <div class="calc-group">
+          <label>
+            <span>TOTAL EXPLOIT FRICTION COST</span>
+            <span id="calc-cost-display" style="font-family: var(--font-mono); color: var(--accent-cyan);">9 points</span>
+          </label>
+          <input type="range" class="calc-slider" id="calc-cost-slider" min="2" max="25" value="9" />
+        </div>
+
+        <div class="calc-group">
+          <label>
+            <span>TARGET ASSET CRITICALITY</span>
+            <span id="calc-crit-display" style="font-family: var(--font-mono); color: var(--accent-red);">Tier-0 (Domain Admin)</span>
+          </label>
+          <select id="calc-crit-select" style="width: 100%; background: #0c111c; border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px;">
+            <option value="15">Tier-0 Critical Asset (+15 pts)</option>
+            <option value="0">Standard Workstation / User (0 pts)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="calc-result">
+        <div style="font-size: 12px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">
+          CALCULATED THREAT SCORE
+        </div>
+        <div class="calc-score" id="calc-score-val">61</div>
+        <div id="calc-level-badge" class="badge badge-high" style="font-size: 12px; padding: 4px 10px; margin-bottom: 12px;">
+          HIGH THREAT
+        </div>
+        <div style="font-size: 11px; color: var(--text-muted); line-height: 1.5; max-width: 260px;">
+          Formula: <code style="color: var(--accent-cyan); font-family: var(--font-mono);">max(5, 85 + Crit - (Cost×3.5) - (Hops×2.5))</code>
+        </div>
+      </div>
     </div>
-    <div class="stat anim" style="--d:0.74s" data-target="150" data-suffix="+" data-decimals="0">
-      <div class="stat-icon">#</div>
-      <div class="stat-value"><span class="num">0</span><span class="suf"></span></div>
-      <div class="stat-label">Enterprise Identities</div>
+  </section>
+
+  <!-- Section 4: Technical FAQ Accordion -->
+  <section class="section" id="faq">
+    <div class="section-tag">Evaluation FAQ</div>
+    <h2 class="section-title">Frequently Asked Questions</h2>
+    <p class="section-subtitle">
+      Everything you need to know about ZENITH's architecture, threat modeling, and hackathon scope.
+    </p>
+
+    <div class="faq-list">
+      <div class="faq-item open">
+        <button class="faq-trigger">
+          <span>How does ZENITH differ from BloodHound?</span>
+          <span class="faq-icon">▾</span>
+        </button>
+        <div class="faq-body">
+          While BloodHound focuses primarily on unweighted on-premises Active Directory hops, ZENITH introduces exploit-difficulty cost weighting (Dijkstra-equivalent Cypher traversal), interactive single-edge remediation simulation with automatic reroute discovery, and downstream blast radius quantification.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-trigger">
+          <span>Why are graph algorithms used instead of LLMs for path discovery?</span>
+          <span class="faq-icon">▾</span>
+        </button>
+        <div class="faq-body">
+          LLMs suffer from hallucinations, non-determinism, and contextual token limits when traversing complex graphs. In cybersecurity, false negatives can lead to catastrophic breach. ZENITH computes paths mathematically with 100% precision in Neo4j, using the LLM strictly for post-processing narration.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-trigger">
+          <span>Can judges inject custom identities live during the presentation?</span>
+          <span class="faq-icon">▾</span>
+        </button>
+        <div class="faq-body">
+          Yes! ZENITH features a dedicated "+ Live Inject Edge" modal in the console. Judges can supply any identity ID and privilege type live to witness real-time Cypher recalculation without a scripted video.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-trigger">
+          <span>What is the performance latency for enterprise-scale graphs?</span>
+          <span class="faq-icon">▾</span>
+        </button>
+        <div class="faq-body">
+          Because Neo4j uses native pointer-hopping (index-free adjacency), queries across our 130-node enterprise dataset execute in under 10 milliseconds, making it suitable for live SOC telemetry feeds.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <img src="assets/logo.webp" width="30" height="30" alt="ZENITH" style="border-radius: 50%;" />
+      <span style="font-weight: 700; font-size: 14px;">ZENITH</span>
+      <span style="color: var(--text-dim); font-size: 12px;">• Kurukshetra 2.0 Hackathon</span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <a href="#hero" class="nav-link" style="font-size: 13px;">Back to Top</a>
+      <a href="http://localhost:5173" class="launch-btn" style="padding: 6px 16px; font-size: 12px;" target="_blank">
+        Launch App &rarr;
+      </a>
     </div>
   </footer>
 
-</div>
-
-<div class="menu-overlay" id="menu-overlay" hidden>
-  <div class="menu-sheet" id="mobile-menu">
-    <a href="#" class="menu-link" style="--i:0">Home</a>
-    <a href="#" class="menu-link" style="--i:1">Product</a>
-    <a href="#" class="menu-link" style="--i:2">Case Studies</a>
-    <a href="#" class="menu-link" style="--i:3">Contact</a>
-    <a href="#" class="menu-link menu-signin" style="--i:4">Sign in</a>
-  </div>
 </div>
 
 <script src="main.js"></script>
