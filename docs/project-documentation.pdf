@@ -1,0 +1,208 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 6 0 R >>
+endobj
+6 0 obj
+<< /Length 2876 >>
+stream
+BT
+/F2 18 Tf
+50 740 Td
+(ZENITH ? Project Documentation) Tj
+/F1 10 Tf
+0 -22 Td
+(Attack Path & Identity Privilege Graph Analyzer | Kurukshetra 2.0 (Domain 2)) Tj
+0 -28 Td
+/F2 12 Tf
+(1. Executive Summary & Problem Formulation) Tj
+0 -16 Td
+/F1 9.5 Tf
+(In modern enterprise Active Directory and Cloud IAM topologies, access) Tj
+0 -12 Td
+/F1 9.5 Tf
+(permissions are rarely dangerous in isolation. However, chained together) Tj
+0 -12 Td
+/F1 9.5 Tf
+(across intermediate identity compromises, credential caching in memory, and) Tj
+0 -12 Td
+/F1 9.5 Tf
+(discretionary access control list \(DACL\) delegations, they form catastrophic) Tj
+0 -12 Td
+/F1 9.5 Tf
+(multi-hop lateral attack paths to Domain Admins and root infrastructure.) Tj
+0 -12 Td
+0 -6 Td
+/F1 9.5 Tf
+(Traditional compliance scanners evaluate permissions in silos and fail to) Tj
+0 -12 Td
+/F1 9.5 Tf
+(detect indirect multi-hop paths. ZENITH formulates attack path discovery as an) Tj
+0 -12 Td
+/F1 9.5 Tf
+(exact directed graph problem in Neo4j, using Dijkstra pathfinding and Cypher) Tj
+0 -12 Td
+/F1 9.5 Tf
+(algorithms to compute deterministic exploit paths and attack costs.) Tj
+0 -12 Td
+0 -6 Td
+/F2 12 Tf
+(2. Mathematical Model & Path Finding Complexity) Tj
+0 -16 Td
+/F1 9.5 Tf
+(ZENITH models identities as nodes V \(Users, Groups, Computers\) and privilege) Tj
+0 -12 Td
+/F1 9.5 Tf
+(relationships as directed edges E with operational friction weights w in [1,) Tj
+0 -12 Td
+/F1 9.5 Tf
+(10].) Tj
+0 -12 Td
+0 -6 Td
+/F1 9.5 Tf
+(The primary path query evaluates candidate multi-hop walks between an initial) Tj
+0 -12 Td
+/F1 9.5 Tf
+(identity and the objective using variable-length traversal MATCH p =) Tj
+0 -12 Td
+/F1 9.5 Tf
+(\(start\)-[*1..6]->\(target\), ranking paths by the summed exploit friction cost.) Tj
+0 -12 Td
+0 -6 Td
+/F1 9.5 Tf
+(The algorithmic time complexity is O\(V * log V + E\), providing sub-15ms) Tj
+0 -12 Td
+/F1 9.5 Tf
+(discovery across enterprise identity topologies.) Tj
+0 -12 Td
+0 -6 Td
+/F2 12 Tf
+(3. Dynamic Risk Scoring Engine & Formula) Tj
+0 -16 Td
+/F1 9.5 Tf
+(ZENITH computes a real-time Risk Score in [5, 100] using the formula: Score =) Tj
+0 -12 Td
+/F1 9.5 Tf
+(clamp\(5, 100, Base - \(Cost * 3.5\) - \(Hops * 2.5\) + SurfaceFactor\).) Tj
+0 -12 Td
+0 -6 Td
+/F1 9.5 Tf
+(Base Criticality: Tier-0 Domain Controllers and Admin Groups start at 100) Tj
+0 -12 Td
+/F1 9.5 Tf
+(baseline. Tier-1 infrastructure servers start at 90 baseline.) Tj
+0 -12 Td
+0 -6 Td
+/F1 9.5 Tf
+(Deductions reflect operational friction: each hop increases detection) Tj
+0 -12 Td
+/F1 9.5 Tf
+(probability \(-2.5 pts\), while exploit resistance subtracts 3.5 pts per) Tj
+0 -12 Td
+/F1 9.5 Tf
+(friction weight unit.) Tj
+0 -12 Td
+0 -6 Td
+/F1 9.5 Tf
+(Surface Factor: Active LSASS memory sessions and DACL ForceChangePassword) Tj
+0 -12 Td
+/F1 9.5 Tf
+(rights add +10 pts exposure, whereas Credential Guard deducts 10 pts.) Tj
+0 -12 Td
+0 -6 Td
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 8 0 R >>
+endobj
+8 0 obj
+<< /Length 1522 >>
+stream
+BT
+/F1 9 Tf
+50 740 Td
+(ZENITH ? Project Documentation ? Page 2) Tj
+0 -25 Td
+/F2 12 Tf
+(4. Decoupled AI Threat Narration Layer) Tj
+0 -16 Td
+/F1 9.5 Tf
+(ZENITH maintains a strict architectural separation: mathematical path) Tj
+0 -12 Td
+/F1 9.5 Tf
+(discovery is NEVER delegated to probabilistic LLM inference. All paths, blast) Tj
+0 -12 Td
+/F1 9.5 Tf
+(radii, and chokepoints are calculated deterministically by Neo4j graph) Tj
+0 -12 Td
+/F1 9.5 Tf
+(algorithms.) Tj
+0 -12 Td
+0 -6 Td
+/F1 9.5 Tf
+(The AI reasoning layer \(NVIDIA NIM Llama-3.3-70b-instruct\) operates strictly) Tj
+0 -12 Td
+/F1 9.5 Tf
+(post-calculation to translate verified graph facts into actionable MITRE) Tj
+0 -12 Td
+/F1 9.5 Tf
+(ATT&CK mappings \(T1021.001 Remote Services, T1003.001 LSASS Memory, T1098) Tj
+0 -12 Td
+/F1 9.5 Tf
+(Account Manipulation\) and CISO-ready remediation playbooks.) Tj
+0 -12 Td
+0 -6 Td
+/F2 12 Tf
+(5. Blast Radius & Chokepoint Severance) Tj
+0 -16 Td
+/F1 9.5 Tf
+(Blast Radius Analysis computes all downstream reachable assets from any) Tj
+0 -12 Td
+/F1 9.5 Tf
+(identity in the graph using BFS/DFS Cypher queries, categorizing reachable) Tj
+0 -12 Td
+/F1 9.5 Tf
+(nodes by type and criticality tier.) Tj
+0 -12 Td
+0 -6 Td
+/F1 9.5 Tf
+(Chokepoint Remediation Simulation enables SOC analysts to revoke candidate) Tj
+0 -12 Td
+/F1 9.5 Tf
+(privilege edges \(e.g. HasSession or CanResetPasswordOf\) in real time to verify) Tj
+0 -12 Td
+/F1 9.5 Tf
+(whether the attack path is eliminated or rerouted to a high-cost alternative.) Tj
+0 -12 Td
+0 -6 Td
+ET
+endstream
+endobj
+xref
+0 9
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000121 00000 n 
+0000000191 00000 n 
+0000000266 00000 n 
+0000000402 00000 n 
+0000003330 00000 n 
+0000003466 00000 n 
+trailer
+<< /Size 9 /Root 1 0 R >>
+startxref
+5040
+%%EOF

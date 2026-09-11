@@ -1,0 +1,55 @@
+{
+  "relationships": {
+    "MemberOf": {
+      "weight": 1,
+      "description": "Group membership granting inherited privileges",
+      "mitreTechnique": "T1078 - Valid Accounts"
+    },
+    "HasSession": {
+      "weight": 2,
+      "description": "Active cached logon session on host vulnerable to LSASS memory dumping",
+      "mitreTechnique": "T1003.001 - OS Credential Dumping: LSASS Memory"
+    },
+    "CanRDP": {
+      "weight": 3,
+      "description": "Remote Desktop Protocol interactive session access (TCP 3389)",
+      "mitreTechnique": "T1021.001 - Remote Services: Remote Desktop Protocol"
+    },
+    "AdminTo": {
+      "weight": 4,
+      "description": "Local Administrator privileges on target host",
+      "mitreTechnique": "T1078.002 - Valid Accounts: Domain Accounts"
+    },
+    "ExecuteDCOM": {
+      "weight": 5,
+      "description": "Remote command execution via DCOM RPC (TCP 135)",
+      "mitreTechnique": "T1021.003 - Remote Services: Distributed Component Object Model"
+    },
+    "CanResetPasswordOf": {
+      "weight": 4,
+      "description": "Active Directory DACL ForceChangePassword privilege",
+      "mitreTechnique": "T1098 - Account Manipulation"
+    },
+    "GenericAll": {
+      "weight": 6,
+      "description": "Full control over Active Directory object permissions and attributes",
+      "mitreTechnique": "T1098.001 - Account Manipulation: Additional Cloud Credentials"
+    },
+    "Kerberoastable": {
+      "weight": 5,
+      "description": "Service account with SPN vulnerable to offline Kerberos TGS cracking",
+      "mitreTechnique": "T1558.003 - Steal or Forge Kerberos Tickets: Kerberoasting"
+    },
+    "GPOAppliedTo": {
+      "weight": 7,
+      "description": "Group Policy Object applied to OU or host hierarchy",
+      "mitreTechnique": "T1484.001 - Domain Policy Modification: Group Policy Modification"
+    }
+  },
+  "criticalTarget": {
+    "id": "grp-domain-admins",
+    "name": "Domain Admins",
+    "type": "Group",
+    "tier": 0
+  }
+}

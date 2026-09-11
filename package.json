@@ -1,0 +1,27 @@
+{
+  "name": "zenith-root",
+  "version": "1.0.0",
+  "description": "ZENITH — Attack Path & Identity Privilege Graph Analyzer",
+  "scripts": {
+    "start": "npm start --prefix src/backend",
+    "dev:backend": "npm run dev --prefix src/backend",
+    "dev:frontend": "npm run dev --prefix src/frontend",
+    "dev": "npm run dev:backend & npm run dev:frontend",
+    "seed": "npm run seed --prefix src/backend",
+    "test": "npm test --prefix src/backend",
+    "build": "npm run build --prefix src/frontend"
+  },
+  "keywords": [
+    "cybersecurity",
+    "attack-path",
+    "neo4j",
+    "graph-database",
+    "active-directory",
+    "identity-security",
+    "dijkstra",
+    "nvidia-nim",
+    "mitre-att-ck"
+  ],
+  "author": "ZENITH Contributors",
+  "license": "MIT"
+}

@@ -2,24 +2,30 @@
 node_modules/
 */node_modules/
 */*/node_modules/
+*/*/*/node_modules/
 
 # Environment files (keep .env.example safe)
 .env
 .env.local
 */.env
 */*/.env
+*/*/*/.env
 !.env.example
 !*/.env.example
+!*/*/.env.example
+!*/*/*/.env.example
 
 # Production builds
 dist/
 build/
 */dist/
 */*/dist/
+*/*/*/dist/
 
 # System and Editor files
 .DS_Store
 */.DS_Store
+*/*/.DS_Store
 Thumbs.db
 .vscode/
 .idea/
