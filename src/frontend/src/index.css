@@ -128,21 +128,37 @@ body {
 }
 
 .btn-subtle {
-  background: linear-gradient(105deg, #080808 0%, #1f1f1f 48%, #363636 100%);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(105deg, #050505 0%, #1f1f1f 48%, #363636 100%);
   color: #f3f3f3;
   border: 1px solid rgba(198, 198, 198, 0.45);
   border-radius: 6px;
   padding: 6px 12px;
   font-size: 12px;
   font-weight: 500;
+  letter-spacing: -0.01em;
   cursor: pointer;
   transition: all 0.25s ease;
+  white-space: nowrap;
+}
+.btn-subtle::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.12) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 0.5s ease;
+  pointer-events: none;
 }
 .btn-subtle:hover {
   color: #ffffff;
   border-color: rgba(235, 235, 235, 0.85);
   background: linear-gradient(105deg, #111111 0%, #333333 45%, #555555 100%);
   box-shadow: 0 0 14px rgba(200, 210, 230, 0.18);
+}
+.btn-subtle:hover::before {
+  transform: translateX(120%);
 }
 
 input, select {

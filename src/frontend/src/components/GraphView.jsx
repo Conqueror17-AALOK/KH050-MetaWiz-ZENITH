@@ -284,13 +284,21 @@ export default function GraphView() {
         background: 'rgba(8, 8, 8, 0.95)',
         zIndex: 10,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <img src="/logo.png" alt="ZENITH" style={{ width: 32, height: 32, borderRadius: '50%' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <svg style={{ width: 22, height: 22, color: '#ffffff', flexShrink: 0 }} viewBox="0 0 24 24" fill="currentColor">
+            <g transform="rotate(-30 12 12)">
+              <circle cx="7.3" cy="3.2" r="1.45" />
+              <rect x="5.5" y="4.7" width="3.6" height="14.6" rx="1.8" />
+              <rect x="14.9" y="4.7" width="3.6" height="14.6" rx="1.8" />
+              <circle cx="16.7" cy="20.8" r="1.45" />
+            </g>
+          </svg>
           <div>
-            <div style={{ fontWeight: 800, fontSize: 16, letterSpacing: '0.08em', color: '#fff' }}>
-              ZENITH <span style={{ color: 'var(--accent-cyan)', fontSize: 12, fontWeight: 500 }}>v2.0</span>
+            <div style={{ fontWeight: 700, fontSize: 15, letterSpacing: '-0.02em', color: '#fff' }}>
+              ZENITH<span style={{ fontWeight: 400, opacity: 0.85 }}>.ai</span>
+              <span style={{ color: '#9a9a9a', fontSize: 10.5, fontWeight: 500, marginLeft: 8, padding: '2px 6px', background: 'rgba(255,255,255,0.08)', borderRadius: 4, border: '1px solid rgba(255,255,255,0.12)' }}>v2.0</span>
             </div>
-            <div style={{ fontSize: 10, color: 'var(--text-dim)', letterSpacing: '0.04em' }}>
+            <div style={{ fontSize: 9.5, color: 'var(--text-dim)', letterSpacing: '0.04em' }}>
               IDENTITY PRIVILEGE GRAPH & ATTACK PATH ANALYZER
             </div>
           </div>
@@ -298,7 +306,7 @@ export default function GraphView() {
 
         {/* Demo Quick Presets */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 11, color: 'var(--text-dim)', marginRight: 4 }}>DEMO PRESETS:</span>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)', marginRight: 4, fontWeight: 600 }}>DEMO PRESETS:</span>
           {PRESETS.map((p, idx) => (
             <button
               key={idx}
@@ -319,7 +327,7 @@ export default function GraphView() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
             className="btn-primary"
-            style={{ padding: '6px 12px', fontSize: 12 }}
+            style={{ padding: '6px 14px', fontSize: 12 }}
             onClick={() => setShowInjectModal(true)}
           >
             + Live Inject Edge
@@ -447,31 +455,33 @@ export default function GraphView() {
             {/* Status Bar */}
             <div style={{
               marginTop: 10,
-              padding: '6px 10px',
-              borderRadius: 4,
-              background: '#0a0e17',
+              padding: '8px 12px',
+              borderRadius: 6,
+              background: '#060606',
               border: '1px solid var(--border-subtle)',
               fontSize: 11,
               color: 'var(--accent-cyan)',
               fontFamily: 'var(--font-mono)',
+              lineHeight: 1.4,
             }}>
               &gt; {status}
             </div>
           </div>
 
           {/* Tab Navigation */}
-          <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', background: '#090d14' }}>
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', background: '#000000' }}>
             <button
               style={{
                 flex: 1,
                 padding: '10px 0',
                 fontSize: 11,
                 fontWeight: 600,
-                background: activeTab === 'paths' ? 'var(--bg-card)' : 'transparent',
-                color: activeTab === 'paths' ? 'var(--accent-cyan)' : 'var(--text-muted)',
+                background: activeTab === 'paths' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+                color: activeTab === 'paths' ? '#ffffff' : 'var(--text-muted)',
                 border: 'none',
-                borderBottom: activeTab === 'paths' ? '2px solid var(--accent-cyan)' : 'none',
+                borderBottom: activeTab === 'paths' ? '2px solid #38bdf8' : 'none',
                 cursor: 'pointer',
+                transition: 'all 0.2s ease',
               }}
               onClick={() => setActiveTab('paths')}
             >
@@ -483,11 +493,12 @@ export default function GraphView() {
                 padding: '10px 0',
                 fontSize: 11,
                 fontWeight: 600,
-                background: activeTab === 'blast' ? 'var(--bg-card)' : 'transparent',
-                color: activeTab === 'blast' ? 'var(--accent-amber)' : 'var(--text-muted)',
+                background: activeTab === 'blast' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+                color: activeTab === 'blast' ? '#fbbf24' : 'var(--text-muted)',
                 border: 'none',
-                borderBottom: activeTab === 'blast' ? '2px solid var(--accent-amber)' : 'none',
+                borderBottom: activeTab === 'blast' ? '2px solid #fbbf24' : 'none',
                 cursor: 'pointer',
+                transition: 'all 0.2s ease',
               }}
               onClick={() => setActiveTab('blast')}
             >
@@ -499,11 +510,12 @@ export default function GraphView() {
                 padding: '10px 0',
                 fontSize: 11,
                 fontWeight: 600,
-                background: activeTab === 'calc' ? 'var(--bg-card)' : 'transparent',
-                color: activeTab === 'calc' ? 'var(--accent-emerald)' : 'var(--text-muted)',
+                background: activeTab === 'calc' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+                color: activeTab === 'calc' ? '#34d399' : 'var(--text-muted)',
                 border: 'none',
-                borderBottom: activeTab === 'calc' ? '2px solid var(--accent-emerald)' : 'none',
+                borderBottom: activeTab === 'calc' ? '2px solid #34d399' : 'none',
                 cursor: 'pointer',
+                transition: 'all 0.2s ease',
               }}
               onClick={() => {
                 setActiveTab('calc');
@@ -518,11 +530,12 @@ export default function GraphView() {
                 padding: '10px 0',
                 fontSize: 11,
                 fontWeight: 600,
-                background: activeTab === 'briefing' ? 'var(--bg-card)' : 'transparent',
-                color: activeTab === 'briefing' ? 'var(--accent-purple)' : 'var(--text-muted)',
+                background: activeTab === 'briefing' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+                color: activeTab === 'briefing' ? '#c084fc' : 'var(--text-muted)',
                 border: 'none',
-                borderBottom: activeTab === 'briefing' ? '2px solid var(--accent-purple)' : 'none',
+                borderBottom: activeTab === 'briefing' ? '2px solid #c084fc' : 'none',
                 cursor: 'pointer',
+                transition: 'all 0.2s ease',
               }}
               onClick={() => {
                 setActiveTab('briefing');
