@@ -13,4 +13,14 @@ export const getBlastRadius = (nodeId) =>
 export const simulateRemediation = (from, to, excludeRelId) =>
   api.post('/simulate-remediation', { from, to, excludeRelId }).then((r) => r.data);
 
+export const explainPath = (from, to, path) =>
+  api.post('/explain-path', { from, to, path }).then((r) => r.data);
+
+export const injectRelationship = (from, to, relationshipType) =>
+  api.post('/inject', { from, to, relationshipType }).then((r) => r.data);
+
+export const getRelationshipTypes = () =>
+  api.get('/relationship-types').then((r) => r.data);
+
 export default api;
+
