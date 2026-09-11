@@ -48,13 +48,40 @@ export default function GraphView() {
   // Remediation simulation state
   const [remediationState, setRemediationState] = useState(null);
 
-  // LLM narration state
+  // LLM threat intelligence state
   const [llmBriefing, setLlmBriefing] = useState(null);
   const [isGeneratingBriefing, setIsGeneratingBriefing] = useState(false);
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-  const [nvidiaApiKey, setNvidiaApiKey] = useState(() => {
-    return typeof window !== 'undefined' ? localStorage.getItem('zenith_nvidia_api_key') || '' : '';
-  });
+
+  // Interactive Risk Calculator state
+  const [calcHops, setCalcHops] = useState(3);
+  const [calcCost, setCalcCost] = useState(9);
+  const [calcTargetTier, setCalcTargetTier] = useState('tier0');
+  const [calcSurfaceFactor, setCalcSurfaceFactor] = useState(5);
+
+  const calcBase = useMemo(() => {
+    if (calcTargetTier === 'tier0') return 100;
+    if (calcTargetTier === 'tier1') return 90;
+    return 85;
+  }, [calcTargetTier]);
+
+  const calculatedRiskScore = useMemo(() => {
+    const raw = calcBase - (calcCost * 3.5) - (calcHops * 2.5) + Number(calcSurfaceFactor);
+    return Math.max(5, Math.min(100, Math.round(raw)));
+  }, [calcBase, calcCost, calcHops, calcSurfaceFactor]);
+
+  const syncCalcFromActivePath = useCallback(() => {
+    if (pathResult?.paths?.[0]) {
+      const p = pathResult.paths[0];
+      setCalcHops(p.hops || 3);
+      setCalcCost(p.totalCost || 9);
+      const isCrit = p.target?.critical !== undefined ? p.target.critical : true;
+      setCalcTargetTier(isCrit ? 'tier0' : 'tier2');
+      const hasSession = p.steps?.some((s) => s.relationship === 'HasSession');
+      const hasGenericAll = p.steps?.some((s) => s.relationship === 'GenericAll' || s.relationship === 'CanResetPasswordOf');
+      setCalcSurfaceFactor(hasGenericAll ? 10 : hasSession ? 5 : 0);
+      setStatus(`Synced Risk Calculator with active path: ${p.hops} hops, friction cost ${p.totalCost}.`);
+    }
+  }, [pathResult]);
 
   // Live Scenario Injection state
   const [showInjectModal, setShowInjectModal] = useState(false);
@@ -185,24 +212,20 @@ export default function GraphView() {
   const runExplainPath = useCallback(async () => {
     if (!pathResult || !pathResult.paths || pathResult.paths.length === 0) return;
     setIsGeneratingBriefing(true);
-    setStatus('ANALYZING CURRENT ATTACK PATH with NVIDIA NIM...');
+    setStatus('Generating AI threat analysis on dataset attack path...');
 
     try {
       const best = pathResult.paths[0];
-      const briefing = await explainPath(fromId, toId, best, nvidiaApiKey);
+      const briefing = await explainPath(fromId, toId, best);
       setLlmBriefing(briefing);
       setActiveTab('briefing');
-      if (briefing.isLive) {
-        setStatus(`Live AI analysis complete via NVIDIA NIM (${briefing.model || 'Llama-3.1-70B'}).`);
-      } else {
-        setStatus('Attack path analyzed via deterministic graph intelligence engine.');
-      }
+      setStatus(`AI threat analysis complete: ${briefing.severity || briefing.threatLevel || 'HIGH'} Threat on active dataset.`);
     } catch (err) {
       setStatus(`Failed to generate briefing: ${err.message}`);
     } finally {
       setIsGeneratingBriefing(false);
     }
-  }, [pathResult, fromId, toId, nvidiaApiKey]);
+  }, [pathResult, fromId, toId]);
 
   // Live judge scenario injection
   const handleInject = async (e) => {
@@ -442,7 +465,7 @@ export default function GraphView() {
               style={{
                 flex: 1,
                 padding: '10px 0',
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: 600,
                 background: activeTab === 'paths' ? 'var(--bg-card)' : 'transparent',
                 color: activeTab === 'paths' ? 'var(--accent-cyan)' : 'var(--text-muted)',
@@ -452,13 +475,13 @@ export default function GraphView() {
               }}
               onClick={() => setActiveTab('paths')}
             >
-              Attack Paths {pathResult?.paths?.length ? `(${pathResult.paths.length})` : ''}
+              Paths {pathResult?.paths?.length ? `(${pathResult.paths.length})` : ''}
             </button>
             <button
               style={{
                 flex: 1,
                 padding: '10px 0',
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: 600,
                 background: activeTab === 'blast' ? 'var(--bg-card)' : 'transparent',
                 color: activeTab === 'blast' ? 'var(--accent-amber)' : 'var(--text-muted)',
@@ -468,13 +491,32 @@ export default function GraphView() {
               }}
               onClick={() => setActiveTab('blast')}
             >
-              Blast Radius {blastRadiusData ? `(${blastRadiusData.reachableCount})` : ''}
+              Blast {blastRadiusData ? `(${blastRadiusData.reachableCount})` : ''}
             </button>
             <button
               style={{
                 flex: 1,
                 padding: '10px 0',
-                fontSize: 12,
+                fontSize: 11,
+                fontWeight: 600,
+                background: activeTab === 'calc' ? 'var(--bg-card)' : 'transparent',
+                color: activeTab === 'calc' ? 'var(--accent-emerald)' : 'var(--text-muted)',
+                border: 'none',
+                borderBottom: activeTab === 'calc' ? '2px solid var(--accent-emerald)' : 'none',
+                cursor: 'pointer',
+              }}
+              onClick={() => {
+                setActiveTab('calc');
+                syncCalcFromActivePath();
+              }}
+            >
+              ⚡ Risk Calc
+            </button>
+            <button
+              style={{
+                flex: 1,
+                padding: '10px 0',
+                fontSize: 11,
                 fontWeight: 600,
                 background: activeTab === 'briefing' ? 'var(--bg-card)' : 'transparent',
                 color: activeTab === 'briefing' ? 'var(--accent-purple)' : 'var(--text-muted)',
@@ -487,7 +529,7 @@ export default function GraphView() {
                 if (!llmBriefing && pathResult?.paths?.length) runExplainPath();
               }}
             >
-              Live AI Reasoning
+              AI Intelligence
             </button>
           </div>
 
@@ -565,6 +607,20 @@ export default function GraphView() {
                             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                               <span style={{ fontWeight: 700, fontSize: 13 }}>Path #{pIdx + 1}</span>
                               <span className={`badge ${riskClass}`}>Risk {p.riskScore}/100</span>
+                              <button
+                                className="btn-subtle"
+                                style={{ fontSize: 10, padding: '2px 6px', color: 'var(--accent-emerald)', borderColor: 'rgba(16, 185, 129, 0.3)' }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCalcHops(p.hops);
+                                  setCalcCost(p.totalCost);
+                                  setCalcTargetTier(p.target?.critical ? 'tier0' : 'tier2');
+                                  setActiveTab('calc');
+                                }}
+                                title="Open this path parameters in the interactive Risk Calculator"
+                              >
+                                ⚡ Calc
+                              </button>
                             </div>
                             <span style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
                               {p.hops} hops • cost {p.totalCost}
@@ -691,6 +747,441 @@ export default function GraphView() {
               </div>
             )}
 
+            {/* TAB: RISK CALCULATOR */}
+            {activeTab === 'calc' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {/* Header & Sync Controls */}
+                <div style={{
+                  padding: 12,
+                  background: 'rgba(16, 185, 129, 0.08)',
+                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  borderRadius: 6,
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 13 }}>⚡</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent-emerald)', letterSpacing: '0.05em' }}>
+                        DYNAMIC RISK CALCULATOR
+                      </span>
+                    </div>
+                    <span style={{
+                      fontSize: 10,
+                      fontFamily: 'var(--font-mono)',
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      color: 'var(--accent-emerald)',
+                      padding: '2px 6px',
+                      borderRadius: 4,
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                    }}>
+                      INTERACTIVE ENGINE
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4, marginBottom: 10 }}>
+                    Simulate lateral risk scoring based on path hop distance, exploit friction cost, target asset criticality tier, and privilege surface factors.
+                  </div>
+
+                  {/* Actions & Preset Shortcuts */}
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <button
+                      onClick={syncCalcFromActivePath}
+                      disabled={!pathResult?.paths?.length}
+                      style={{
+                        padding: '5px 10px',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        background: pathResult?.paths?.length ? 'var(--accent-cyan)' : 'var(--bg-card)',
+                        color: pathResult?.paths?.length ? '#000' : 'var(--text-dim)',
+                        border: 'none',
+                        borderRadius: 4,
+                        cursor: pathResult?.paths?.length ? 'pointer' : 'not-allowed',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 5,
+                      }}
+                      title={pathResult?.paths?.length ? 'Pull hops, cost, and target tier from active attack path' : 'Find an attack path first to sync'}
+                    >
+                      <span>🔄</span> Sync From Active Path
+                    </button>
+                    <button
+                      onClick={() => {
+                        setCalcHops(3);
+                        setCalcCost(9);
+                        setCalcTargetTier('tier0');
+                        setCalcSurfaceFactor(5);
+                      }}
+                      style={{
+                        padding: '5px 8px',
+                        fontSize: 10,
+                        fontWeight: 600,
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        color: 'var(--text-muted)',
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: 4,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Default Path
+                    </button>
+                    <button
+                      onClick={() => {
+                        setCalcHops(1);
+                        setCalcCost(2);
+                        setCalcTargetTier('tier0');
+                        setCalcSurfaceFactor(10);
+                      }}
+                      style={{
+                        padding: '5px 8px',
+                        fontSize: 10,
+                        fontWeight: 600,
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        color: 'var(--accent-red)',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        borderRadius: 4,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Direct DA (High)
+                    </button>
+                    <button
+                      onClick={() => {
+                        setCalcHops(6);
+                        setCalcCost(24);
+                        setCalcTargetTier('tier1');
+                        setCalcSurfaceFactor(0);
+                      }}
+                      style={{
+                        padding: '5px 8px',
+                        fontSize: 10,
+                        fontWeight: 600,
+                        background: 'rgba(59, 130, 246, 0.1)',
+                        color: 'var(--accent-blue)',
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        borderRadius: 4,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Deep Pivot (Low)
+                    </button>
+                  </div>
+                </div>
+
+                {/* Main Threat Score & Dynamic Gauge Card */}
+                <div style={{
+                  padding: 16,
+                  background: 'linear-gradient(180deg, #111827 0%, #0b0f19 100%)',
+                  border: `1px solid ${
+                    calculatedRiskScore >= 80 ? 'var(--accent-red)' :
+                    calculatedRiskScore >= 60 ? 'var(--accent-amber)' :
+                    calculatedRiskScore >= 40 ? 'var(--accent-cyan)' : 'var(--accent-emerald)'
+                  }`,
+                  borderRadius: 8,
+                  boxShadow: `0 0 25px ${
+                    calculatedRiskScore >= 80 ? 'rgba(239, 68, 68, 0.15)' :
+                    calculatedRiskScore >= 60 ? 'rgba(245, 158, 11, 0.15)' :
+                    calculatedRiskScore >= 40 ? 'rgba(6, 182, 212, 0.15)' : 'rgba(16, 185, 129, 0.15)'
+                  }`,
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                    <div>
+                      <div style={{ fontSize: 10, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
+                        CALCULATED THREAT EXPOSURE
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                        <span style={{
+                          fontSize: 40,
+                          fontWeight: 900,
+                          fontFamily: 'var(--font-mono)',
+                          color: calculatedRiskScore >= 80 ? 'var(--accent-red)' :
+                                 calculatedRiskScore >= 60 ? 'var(--accent-amber)' :
+                                 calculatedRiskScore >= 40 ? 'var(--accent-cyan)' : 'var(--accent-emerald)',
+                          lineHeight: 1,
+                        }}>
+                          {calculatedRiskScore}
+                        </span>
+                        <span style={{ fontSize: 18, color: 'var(--text-dim)', fontWeight: 600 }}>/ 100</span>
+                      </div>
+                    </div>
+
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '4px 10px',
+                        borderRadius: 4,
+                        fontSize: 11,
+                        fontWeight: 800,
+                        letterSpacing: '0.06em',
+                        background: calculatedRiskScore >= 80 ? 'rgba(239, 68, 68, 0.2)' :
+                                    calculatedRiskScore >= 60 ? 'rgba(245, 158, 11, 0.2)' :
+                                    calculatedRiskScore >= 40 ? 'rgba(6, 182, 212, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                        color: calculatedRiskScore >= 80 ? 'var(--accent-red)' :
+                               calculatedRiskScore >= 60 ? 'var(--accent-amber)' :
+                               calculatedRiskScore >= 40 ? 'var(--accent-cyan)' : 'var(--accent-emerald)',
+                        border: `1px solid ${
+                          calculatedRiskScore >= 80 ? 'rgba(239, 68, 68, 0.4)' :
+                          calculatedRiskScore >= 60 ? 'rgba(245, 158, 11, 0.4)' :
+                          calculatedRiskScore >= 40 ? 'rgba(6, 182, 212, 0.4)' : 'rgba(16, 185, 129, 0.4)'
+                        }`,
+                      }}>
+                        {calculatedRiskScore >= 80 ? 'CRITICAL SEVERITY' :
+                         calculatedRiskScore >= 60 ? 'HIGH SEVERITY' :
+                         calculatedRiskScore >= 40 ? 'MEDIUM SEVERITY' : 'LOW SEVERITY'}
+                      </span>
+                      <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 5, fontFamily: 'var(--font-mono)' }}>
+                        {calculatedRiskScore >= 80 ? 'Rapid Compromise Path' :
+                         calculatedRiskScore >= 60 ? 'Plausible Lateral Path' :
+                         calculatedRiskScore >= 40 ? 'Moderate Effort Required' : 'High Friction Defense'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Visual Progress Bar */}
+                  <div style={{
+                    width: '100%',
+                    height: 8,
+                    background: '#1a2234',
+                    borderRadius: 4,
+                    overflow: 'hidden',
+                    marginBottom: 14,
+                    position: 'relative',
+                  }}>
+                    <div style={{
+                      width: `${calculatedRiskScore}%`,
+                      height: '100%',
+                      background: calculatedRiskScore >= 80 ? 'linear-gradient(90deg, #f59e0b, #ef4444)' :
+                                  calculatedRiskScore >= 60 ? 'linear-gradient(90deg, #06b6d4, #f59e0b)' :
+                                  'linear-gradient(90deg, #10b981, #06b6d4)',
+                      borderRadius: 4,
+                      transition: 'width 0.3s ease, background 0.3s ease',
+                    }} />
+                  </div>
+
+                  {/* Telemetry Breakdown Grid */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: 8,
+                    fontSize: 11,
+                    background: '#090d15',
+                    padding: 10,
+                    borderRadius: 6,
+                    border: '1px solid var(--border-subtle)',
+                  }}>
+                    <div>
+                      <span style={{ color: 'var(--text-dim)', display: 'block', fontSize: 10, textTransform: 'uppercase' }}>EST. TIME-TO-COMPROMISE</span>
+                      <span style={{ color: '#fff', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
+                        {calculatedRiskScore >= 80 ? '< 15 mins (Urgent)' :
+                         calculatedRiskScore >= 60 ? '30 - 60 mins' :
+                         calculatedRiskScore >= 40 ? '2 - 6 hours' : '> 24 hours'}
+                      </span>
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--text-dim)', display: 'block', fontSize: 10, textTransform: 'uppercase' }}>LATERAL RESISTANCE</span>
+                      <span style={{ color: '#fff', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
+                        {calculatedRiskScore >= 80 ? 'Minimal (Direct Session)' :
+                         calculatedRiskScore >= 60 ? 'Standard Friction' :
+                         'High (Multiple Hops)'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Interactive Sliders & Configuration */}
+                <div style={{
+                  padding: 14,
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 6,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 14,
+                }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    Model Parameter Controls
+                  </div>
+
+                  {/* Target Asset Criticality */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 11 }}>
+                      <span style={{ color: '#fff', fontWeight: 600 }}>Target Asset Criticality Tier</span>
+                      <span style={{ color: 'var(--accent-cyan)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+                        Base: {calcBase} pts
+                      </span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+                      {[
+                        { id: 'tier0', label: 'Tier-0 Apex', desc: 'DC / DA Group', base: 100 },
+                        { id: 'tier1', label: 'Tier-1 Infra', desc: 'Servers / DBs', base: 90 },
+                        { id: 'tier2', label: 'Tier-2 Host', desc: 'Workstations', base: 85 },
+                      ].map((tier) => (
+                        <button
+                          key={tier.id}
+                          onClick={() => setCalcTargetTier(tier.id)}
+                          style={{
+                            padding: '8px 6px',
+                            background: calcTargetTier === tier.id ? 'rgba(56, 189, 248, 0.15)' : '#090d15',
+                            border: `1px solid ${calcTargetTier === tier.id ? 'var(--accent-cyan)' : 'var(--border-subtle)'}`,
+                            borderRadius: 6,
+                            color: calcTargetTier === tier.id ? 'var(--accent-cyan)' : 'var(--text-muted)',
+                            cursor: 'pointer',
+                            textAlign: 'center',
+                          }}
+                        >
+                          <div style={{ fontSize: 11, fontWeight: 700 }}>{tier.label}</div>
+                          <div style={{ fontSize: 9, color: 'var(--text-dim)', marginTop: 2 }}>{tier.desc}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Pivot Depth / Hops Slider */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 11 }}>
+                      <span style={{ color: '#fff', fontWeight: 600 }}>Lateral Pivot Depth (Hops)</span>
+                      <span style={{ color: 'var(--accent-amber)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+                        {calcHops} {calcHops === 1 ? 'Hop' : 'Hops'} (Deduction: -{(calcHops * 2.5).toFixed(1)} pts)
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={1}
+                      max={8}
+                      step={1}
+                      value={calcHops}
+                      onChange={(e) => setCalcHops(Number(e.target.value))}
+                      style={{
+                        width: '100%',
+                        accentColor: 'var(--accent-amber)',
+                        cursor: 'pointer',
+                      }}
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: 'var(--text-dim)', marginTop: 2 }}>
+                      <span>1 Hop (Direct)</span>
+                      <span>4 Hops (Standard Pivot)</span>
+                      <span>8 Hops (Deep Chain)</span>
+                    </div>
+                  </div>
+
+                  {/* Exploit Friction Cost Slider */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 11 }}>
+                      <span style={{ color: '#fff', fontWeight: 600 }}>Exploit Difficulty Cost (Total Weight)</span>
+                      <span style={{ color: 'var(--accent-red)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+                        Cost {calcCost} (Deduction: -{(calcCost * 3.5).toFixed(1)} pts)
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={1}
+                      max={35}
+                      step={1}
+                      value={calcCost}
+                      onChange={(e) => setCalcCost(Number(e.target.value))}
+                      style={{
+                        width: '100%',
+                        accentColor: 'var(--accent-red)',
+                        cursor: 'pointer',
+                      }}
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: 'var(--text-dim)', marginTop: 2 }}>
+                      <span>1 (Effortless)</span>
+                      <span>18 (Moderate MFA/Kerberoast)</span>
+                      <span>35 (Maximum Friction)</span>
+                    </div>
+                  </div>
+
+                  {/* Privilege Attack Surface Factor */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 11 }}>
+                      <span style={{ color: '#fff', fontWeight: 600 }}>Privilege Attack Surface Factor</span>
+                      <span style={{
+                        color: calcSurfaceFactor > 0 ? 'var(--accent-red)' : calcSurfaceFactor < 0 ? 'var(--accent-emerald)' : 'var(--text-dim)',
+                        fontFamily: 'var(--font-mono)',
+                        fontWeight: 700,
+                      }}>
+                        {calcSurfaceFactor > 0 ? `+${calcSurfaceFactor}` : calcSurfaceFactor} pts
+                      </span>
+                    </div>
+                    <select
+                      value={calcSurfaceFactor}
+                      onChange={(e) => setCalcSurfaceFactor(Number(e.target.value))}
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        background: '#090d15',
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: 6,
+                        color: '#fff',
+                        fontSize: 12,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <option value={10}>+10 pts — High Abuse (Active LSASS Session / ResetPassword DACL)</option>
+                      <option value={5}>+5 pts — Moderate Abuse (Cached Kerberos / DCOM Access)</option>
+                      <option value={0}>+0 pts — Standard Lateral Vector</option>
+                      <option value={-10}>-10 pts — Hardened (Credential Guard / LAPS Active)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Mathematical Formula Breakdown */}
+                <div style={{
+                  padding: 12,
+                  background: '#090d15',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 6,
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 11,
+                }}>
+                  <div style={{ color: 'var(--text-dim)', fontSize: 10, textTransform: 'uppercase', marginBottom: 6 }}>
+                    ARITHMETIC FORMULA BREAKDOWN
+                  </div>
+                  <div style={{ color: 'var(--accent-cyan)', background: '#05070a', padding: 8, borderRadius: 4, lineHeight: 1.5, wordBreak: 'break-all' }}>
+                    Score = clamp(5, 100, Base ({calcBase}) - Friction ({(calcCost * 3.5).toFixed(1)}) - Hops ({(calcHops * 2.5).toFixed(1)}) + Surface ({calcSurfaceFactor >= 0 ? `+${calcSurfaceFactor}` : calcSurfaceFactor})) = <strong style={{ color: '#fff' }}>{calculatedRiskScore}</strong>
+                  </div>
+                  <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 8, lineHeight: 1.4 }}>
+                    • <strong>Friction Penalty:</strong> Each Dijkstra edge weight adds exploit resistance (-3.5 pts/weight).<br />
+                    • <strong>Hop Penalty:</strong> Each lateral pivot increases probability of detection (-2.5 pts/hop).<br />
+                    • <strong>Criticality Baseline:</strong> Tier-0 Apex targets start at 100 baseline vulnerability.
+                  </div>
+                </div>
+
+                {/* Chokepoint Remediation Simulation Preview */}
+                {pathResult?.paths?.[0] && (
+                  <div style={{
+                    padding: 12,
+                    background: 'rgba(59, 130, 246, 0.08)',
+                    border: '1px solid rgba(59, 130, 246, 0.25)',
+                    borderRadius: 6,
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent-blue)', textTransform: 'uppercase' }}>
+                        🛡️ Remediation Impact Simulator
+                      </span>
+                      <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--accent-emerald)' }}>
+                        Est. Risk Reduction: -{Math.min(calculatedRiskScore - 15, 45)} pts
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8, lineHeight: 1.4 }}>
+                      Revoking the primary chokepoint in the active path (<strong>{pathResult.paths[0].steps[0]?.fromName} -[{pathResult.paths[0].steps[0]?.relationship}]-&gt; {pathResult.paths[0].steps[0]?.toName}</strong>) severs this lateral vector.
+                    </div>
+                    <button
+                      className="btn-danger"
+                      style={{ width: '100%', padding: '6px 12px', fontSize: 11, fontWeight: 600 }}
+                      onClick={() => {
+                        const step = pathResult.paths[0].steps[0];
+                        if (step) {
+                          runRemediationOnEdge(step.relId, `${step.fromName} -[${step.relationship}]-> ${step.toName}`);
+                          setActiveTab('paths');
+                        }
+                      }}
+                    >
+                      🛡️ Simulate Severing Chokepoint in Graph
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* TAB 3: LIVE AI REASONING */}
             {activeTab === 'briefing' && (
               <div>
@@ -701,16 +1192,16 @@ export default function GraphView() {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '10px 12px',
-                    background: 'rgba(245, 158, 11, 0.1)',
-                    border: '1px solid rgba(245, 158, 11, 0.35)',
+                    background: 'rgba(56, 189, 248, 0.1)',
+                    border: '1px solid rgba(56, 189, 248, 0.35)',
                     borderRadius: 6,
                     marginBottom: 14,
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#fbbf24', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
-                      <span className="live-pulse-dot" style={{ width: 8, height: 8, borderRadius: '50%', background: '#fbbf24', display: 'inline-block' }} />
-                      ANALYZING CURRENT ATTACK PATH...
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--accent-cyan)', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
+                      <span className="live-pulse-dot" style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent-cyan)', display: 'inline-block' }} />
+                      ANALYZING DATASET ATTACK PATH...
                     </div>
-                    <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>NVIDIA NIM</span>
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>ZENITH Cyber AI</span>
                   </div>
                 ) : llmBriefing ? (
                   <div style={{
@@ -718,8 +1209,8 @@ export default function GraphView() {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '10px 12px',
-                    background: llmBriefing.isLive ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.08)',
-                    border: `1px solid ${llmBriefing.isLive ? 'rgba(16, 185, 129, 0.35)' : 'rgba(245, 158, 11, 0.3)'}`,
+                    background: 'rgba(16, 185, 129, 0.1)',
+                    border: '1px solid rgba(16, 185, 129, 0.35)',
                     borderRadius: 6,
                     marginBottom: 14,
                   }}>
@@ -728,43 +1219,27 @@ export default function GraphView() {
                         width: 8,
                         height: 8,
                         borderRadius: '50%',
-                        background: llmBriefing.isLive ? '#10b981' : '#f59e0b',
-                        boxShadow: llmBriefing.isLive ? '0 0 8px #10b981' : '0 0 8px #f59e0b',
+                        background: '#10b981',
+                        boxShadow: '0 0 8px #10b981',
                         display: 'inline-block',
                       }} />
                       <span style={{
                         fontSize: 11,
                         fontWeight: 800,
                         letterSpacing: '0.05em',
-                        color: llmBriefing.isLive ? '#34d399' : '#fbbf24',
+                        color: '#34d399',
                       }}>
-                        {llmBriefing.isLive ? '● AI ANALYSIS COMPLETE' : '● DETERMINISTIC GRAPH ANALYSIS'}
+                        ● AI THREAT ANALYSIS COMPLETE
                       </span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span className="badge" style={{
-                        fontSize: 10,
-                        background: 'rgba(56, 189, 248, 0.12)',
-                        color: 'var(--accent-cyan)',
-                        border: '1px solid rgba(56, 189, 248, 0.25)',
-                      }}>
-                        {llmBriefing.isLive ? (llmBriefing.model || 'NVIDIA NIM') : 'Neo4j Graph Engine'}
-                      </span>
-                      <button
-                        onClick={() => setShowApiKeyModal(true)}
-                        title="Configure NVIDIA NIM API Key"
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: 'var(--text-muted)',
-                          cursor: 'pointer',
-                          fontSize: 12,
-                          padding: '0 2px',
-                        }}
-                      >
-                        ⚙️
-                      </button>
-                    </div>
+                    <span className="badge" style={{
+                      fontSize: 10,
+                      background: 'rgba(56, 189, 248, 0.12)',
+                      color: 'var(--accent-cyan)',
+                      border: '1px solid rgba(56, 189, 248, 0.25)',
+                    }}>
+                      {llmBriefing.model || 'Active Directory Dataset Model'}
+                    </span>
                   </div>
                 ) : (
                   <div style={{
@@ -779,47 +1254,9 @@ export default function GraphView() {
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--accent-cyan)', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
                       <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent-cyan)', display: 'inline-block' }} />
-                      ● LIVE AI ANALYSIS
+                      ● LIVE AI THREAT INTELLIGENCE
                     </div>
-                    <button
-                      onClick={() => setShowApiKeyModal(true)}
-                      title="Configure NVIDIA NIM API Key"
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: 'var(--text-muted)',
-                        cursor: 'pointer',
-                        fontSize: 12,
-                      }}
-                    >
-                      ⚙️
-                    </button>
-                  </div>
-                )}
-
-                {/* Graceful Fallback Notice Banner */}
-                {llmBriefing && !llmBriefing.isLive && llmBriefing.notice && (
-                  <div style={{
-                    background: 'rgba(245, 158, 11, 0.08)',
-                    border: '1px solid rgba(245, 158, 11, 0.3)',
-                    borderRadius: 6,
-                    padding: '8px 12px',
-                    marginBottom: 14,
-                    fontSize: 11,
-                    color: '#fbbf24',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 8,
-                  }}>
-                    <span>⚠️ {llmBriefing.notice}</span>
-                    <button
-                      className="btn-subtle"
-                      style={{ fontSize: 10, padding: '3px 8px', color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.4)', whiteSpace: 'nowrap' }}
-                      onClick={() => setShowApiKeyModal(true)}
-                    >
-                      Add Key
-                    </button>
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Neo4j Verified Dataset</span>
                   </div>
                 )}
 
@@ -839,14 +1276,30 @@ export default function GraphView() {
                           Risk Score: {llmBriefing.riskScore || llmBriefing.requestPayload?.path?.riskScore}/100
                         </span>
                       </div>
-                      <button
-                        className="btn-subtle"
-                        style={{ fontSize: 11, padding: '3px 8px', display: 'flex', alignItems: 'center', gap: 4 }}
-                        onClick={runExplainPath}
-                        disabled={isGeneratingBriefing}
-                      >
-                        🔄 Re-run Analysis
-                      </button>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button
+                          className="btn-subtle"
+                          style={{ fontSize: 11, padding: '3px 8px', color: 'var(--accent-emerald)', borderColor: 'rgba(16, 185, 129, 0.3)' }}
+                          onClick={() => {
+                            if (llmBriefing.requestPayload?.path) {
+                              setCalcHops(llmBriefing.requestPayload.path.hops);
+                              setCalcCost(llmBriefing.requestPayload.path.totalCost);
+                              setCalcTargetTier(llmBriefing.requestPayload.target?.critical ? 'tier0' : 'tier2');
+                            }
+                            setActiveTab('calc');
+                          }}
+                        >
+                          ⚡ Test in Calculator
+                        </button>
+                        <button
+                          className="btn-subtle"
+                          style={{ fontSize: 11, padding: '3px 8px', display: 'flex', alignItems: 'center', gap: 4 }}
+                          onClick={runExplainPath}
+                          disabled={isGeneratingBriefing}
+                        >
+                          🔄 Re-run
+                        </button>
+                      </div>
                     </div>
 
                     {/* Executive Summary */}
@@ -1191,78 +1644,6 @@ export default function GraphView() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* NVIDIA NIM API Key Modal */}
-      {showApiKeyModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          background: 'rgba(0, 0, 0, 0.75)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 100,
-        }}>
-          <div style={{
-            background: 'var(--bg-secondary)',
-            border: '1px solid var(--border-active)',
-            borderRadius: 8,
-            padding: 24,
-            width: 440,
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <div style={{ fontWeight: 800, fontSize: 15, color: '#fff' }}>Configure NVIDIA NIM API Key</div>
-              <button
-                onClick={() => setShowApiKeyModal(false)}
-                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: 18, cursor: 'pointer' }}
-              >
-                ×
-              </button>
-            </div>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.5 }}>
-              Optionally supply an NVIDIA NIM API key for live LLM reasoning (<code>meta/llama-3.1-70b-instruct</code>). If left blank, ZENITH utilizes its deterministic graph intelligence engine.
-            </p>
-            <input
-              type="password"
-              placeholder="nvapi-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-              value={nvidiaApiKey}
-              onChange={(e) => setNvidiaApiKey(e.target.value)}
-              style={{ width: '100%', marginBottom: 16, fontFamily: 'var(--font-mono)', fontSize: 12 }}
-            />
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button
-                type="button"
-                className="btn-subtle"
-                onClick={() => {
-                  setNvidiaApiKey('');
-                  if (typeof window !== 'undefined') localStorage.removeItem('zenith_nvidia_api_key');
-                  setShowApiKeyModal(false);
-                }}
-              >
-                Clear Key
-              </button>
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    if (nvidiaApiKey.trim()) localStorage.setItem('zenith_nvidia_api_key', nvidiaApiKey.trim());
-                    else localStorage.removeItem('zenith_nvidia_api_key');
-                  }
-                  setShowApiKeyModal(false);
-                  if (pathResult?.paths?.length) runExplainPath();
-                }}
-              >
-                Save & Run Live Analysis
-              </button>
-            </div>
           </div>
         </div>
       )}
