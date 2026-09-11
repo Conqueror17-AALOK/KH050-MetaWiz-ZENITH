@@ -78,17 +78,42 @@ async function findAttackPaths(fromId, toId, maxHops = 6, limit = 5) {
       const path = record.get('p');
       const totalCost = record.get('totalCost');
       const isCritical = record.get('isCritical');
-      const steps = path.segments.map((seg) => ({
-        from: seg.start.properties.id,
-        fromName: seg.start.properties.name,
-        to: seg.end.properties.id,
-        toName: seg.end.properties.name,
-        relationship: seg.relationship.type,
-        relId: seg.relationship.elementId || (seg.relationship.identity.toNumber
-          ? seg.relationship.identity.toNumber()
-          : seg.relationship.identity),
-      }));
+      const steps = path.segments.map((seg) => {
+        const weightVal = seg.relationship.properties.weight;
+        const weight = weightVal !== undefined && weightVal !== null
+          ? (weightVal.toNumber ? weightVal.toNumber() : Number(weightVal))
+          : 1;
+        return {
+          from: seg.start.properties.id,
+          fromName: seg.start.properties.name,
+          fromType: seg.start.labels ? seg.start.labels[0] : 'Node',
+          to: seg.end.properties.id,
+          toName: seg.end.properties.name,
+          toType: seg.end.labels ? seg.end.labels[0] : 'Node',
+          relationship: seg.relationship.type,
+          weight,
+          relId: seg.relationship.elementId || (seg.relationship.identity.toNumber
+            ? seg.relationship.identity.toNumber()
+            : seg.relationship.identity),
+        };
+      });
+
+      const firstSeg = path.segments[0];
+      const lastSeg = path.segments[path.segments.length - 1];
+
       return {
+        source: {
+          id: firstSeg ? firstSeg.start.properties.id : fromId,
+          name: firstSeg ? firstSeg.start.properties.name : fromId,
+          type: firstSeg && firstSeg.start.labels ? firstSeg.start.labels[0] : 'Node',
+          critical: !!(firstSeg && firstSeg.start.properties.critical),
+        },
+        target: {
+          id: lastSeg ? lastSeg.end.properties.id : toId,
+          name: lastSeg ? lastSeg.end.properties.name : toId,
+          type: lastSeg && lastSeg.end.labels ? lastSeg.end.labels[0] : 'Node',
+          critical: !!(lastSeg && lastSeg.end.properties.critical),
+        },
         hops: steps.length,
         totalCost,
         riskScore: scoreFromCost(totalCost, steps.length, isCritical),
@@ -165,21 +190,45 @@ async function simulateRemediation(fromId, toId, excludeRelId, maxHops = 6) {
     const path = record.get('p');
     const totalCost = record.get('totalCost');
     const isCritical = record.get('isCritical');
-    const steps = path.segments.map((seg) => ({
-      from: seg.start.properties.id,
-      fromName: seg.start.properties.name,
-      to: seg.end.properties.id,
-      toName: seg.end.properties.name,
-      relationship: seg.relationship.type,
-      relId: seg.relationship.elementId || (seg.relationship.identity.toNumber
-        ? seg.relationship.identity.toNumber()
-        : seg.relationship.identity),
-    }));
+    const steps = path.segments.map((seg) => {
+      const weightVal = seg.relationship.properties.weight;
+      const weight = weightVal !== undefined && weightVal !== null
+        ? (weightVal.toNumber ? weightVal.toNumber() : Number(weightVal))
+        : 1;
+      return {
+        from: seg.start.properties.id,
+        fromName: seg.start.properties.name,
+        fromType: seg.start.labels ? seg.start.labels[0] : 'Node',
+        to: seg.end.properties.id,
+        toName: seg.end.properties.name,
+        toType: seg.end.labels ? seg.end.labels[0] : 'Node',
+        relationship: seg.relationship.type,
+        weight,
+        relId: seg.relationship.elementId || (seg.relationship.identity.toNumber
+          ? seg.relationship.identity.toNumber()
+          : seg.relationship.identity),
+      };
+    });
+
+    const firstSeg = path.segments[0];
+    const lastSeg = path.segments[path.segments.length - 1];
 
     return {
       pathEliminated: false,
       remainingPathCount: result.records.length,
       reRoutedPath: {
+        source: {
+          id: firstSeg ? firstSeg.start.properties.id : fromId,
+          name: firstSeg ? firstSeg.start.properties.name : fromId,
+          type: firstSeg && firstSeg.start.labels ? firstSeg.start.labels[0] : 'Node',
+          critical: !!(firstSeg && firstSeg.start.properties.critical),
+        },
+        target: {
+          id: lastSeg ? lastSeg.end.properties.id : toId,
+          name: lastSeg ? lastSeg.end.properties.name : toId,
+          type: lastSeg && lastSeg.end.labels ? lastSeg.end.labels[0] : 'Node',
+          critical: !!(lastSeg && lastSeg.end.properties.critical),
+        },
         hops: steps.length,
         totalCost,
         riskScore: scoreFromCost(totalCost, steps.length, isCritical),

@@ -175,20 +175,78 @@ async function runDiagnostics() {
     }
   });
 
-  // 11. Decoupled LLM Threat Briefing
-  await test('POST /api/explain-path (MITRE ATT&CK Threat Briefing)', async () => {
+  // 11. Live AI Threat Reasoning Schema Conformance
+  await test('POST /api/explain-path (Strict JSON Schema Validation)', async () => {
     const res = await request('/explain-path', 'POST', {
       from: 'user-3',
       to: 'grp-domain-admins',
       path: path1,
     });
     if (res.status !== 200) throw new Error(`HTTP ${res.status}`);
-    if (!res.data.executiveSummary) throw new Error('Missing executiveSummary');
-    if (!res.data.mitreTechniques || res.data.mitreTechniques.length === 0) throw new Error('Missing MITRE techniques');
-    if (!res.data.remediationPlaybook || res.data.remediationPlaybook.length === 0) throw new Error('Missing remediation playbook');
+    const d = res.data;
+    if (!d.executiveSummary || typeof d.executiveSummary !== 'string') throw new Error('Missing or invalid executiveSummary');
+    if (!['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].includes(d.severity)) throw new Error(`Invalid severity: ${d.severity}`);
+    if (!d.attackNarrative || typeof d.attackNarrative !== 'string') throw new Error('Missing attackNarrative');
+    if (!Array.isArray(d.stepAnalysis) || d.stepAnalysis.length !== 3) throw new Error('Invalid stepAnalysis');
+    if (!d.primaryChokepoint || !d.primaryChokepoint.relationship || !d.primaryChokepoint.reason) throw new Error('Invalid primaryChokepoint');
+    if (!Array.isArray(d.detectionOpportunities) || d.detectionOpportunities.length === 0) throw new Error('Invalid detectionOpportunities');
+    if (!Array.isArray(d.recommendations) || d.recommendations.length === 0) throw new Error('Invalid recommendations');
+    if (!Array.isArray(d.verifiedFacts) || d.verifiedFacts.length === 0) throw new Error('Invalid verifiedFacts');
+    if (!d.reasoning || typeof d.reasoning !== 'string') throw new Error('Missing reasoning');
   });
 
-  // 12. Live Judge Scenario Injection
+  // 12. Dynamic Path Security Context (Zero Hardcoding Test)
+  await test('POST /api/explain-path (Dynamic Path Adaptation)', async () => {
+    // Request explanation for Planted Path 2 (user-17)
+    const p2Res = await request('/paths?from=user-17&to=grp-domain-admins');
+    const path2 = p2Res.data.paths[0];
+    const res2 = await request('/explain-path', 'POST', {
+      from: 'user-17',
+      to: 'grp-domain-admins',
+      path: path2,
+    });
+    if (res2.status !== 200) throw new Error(`HTTP ${res2.status}`);
+    if (res2.data.source.includes('user-3')) throw new Error('Stale or hardcoded source identity detected');
+    if (res2.data.hops === path1.hops && res2.data.stepAnalysis[0].relationship === path1.steps[0].relationship) {
+      throw new Error('Path 2 explanation mirrors Path 1; lack of dynamic context');
+    }
+  });
+
+  // 13. Direct Structured Payload Support
+  await test('POST /api/explain-path (Direct Canonical Payload Input)', async () => {
+    const customPayload = {
+      source: { id: 'user-99', name: 'Test User 99', type: 'User' },
+      target: { id: 'grp-domain-admins', name: 'Domain Admins', type: 'Group', critical: true },
+      path: { hops: 2, totalCost: 5, riskScore: 72 },
+      steps: [
+        { from: 'user-99', relationship: 'CanRDP', weight: 3, to: 'machine-99' },
+        { from: 'machine-99', relationship: 'AdminTo', weight: 2, to: 'grp-domain-admins' }
+      ],
+      chokepoint: { from: 'user-99', relationship: 'CanRDP', to: 'machine-99' }
+    };
+    const res = await request('/explain-path', 'POST', customPayload);
+    if (res.status !== 200) throw new Error(`HTTP ${res.status}`);
+    if (!res.data.verifiedFacts.some(f => f.includes('Test User 99'))) {
+      throw new Error('Direct structured payload was not honored in explanation');
+    }
+  });
+
+  // 14. Fallback Resilience & Notice Test
+  await test('POST /api/explain-path (Resilient Fallback on Unavailable NIM)', async () => {
+    const res = await request('/explain-path', 'POST', {
+      from: 'user-3',
+      to: 'grp-domain-admins',
+      path: path1,
+      apiKey: 'dummy-invalid-key-for-testing'
+    });
+    if (res.status !== 200) throw new Error(`Expected HTTP 200 fallback, got ${res.status}`);
+    if (res.data.isLive !== false) throw new Error('Expected isLive to be false on invalid key');
+    if (!res.data.notice || !res.data.notice.includes('AI analysis unavailable — deterministic graph analysis is still active.')) {
+      throw new Error(`Expected fallback notice, got: ${res.data.notice}`);
+    }
+  });
+
+  // 15. Live Judge Scenario Injection
   await test('POST /api/inject (Live relationship insertion into Neo4j)', async () => {
     const res = await request('/inject', 'POST', {
       from: 'user-60',

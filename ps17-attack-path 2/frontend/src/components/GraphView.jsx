@@ -51,6 +51,10 @@ export default function GraphView() {
   // LLM narration state
   const [llmBriefing, setLlmBriefing] = useState(null);
   const [isGeneratingBriefing, setIsGeneratingBriefing] = useState(false);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [nvidiaApiKey, setNvidiaApiKey] = useState(() => {
+    return typeof window !== 'undefined' ? localStorage.getItem('zenith_nvidia_api_key') || '' : '';
+  });
 
   // Live Scenario Injection state
   const [showInjectModal, setShowInjectModal] = useState(false);
@@ -177,24 +181,28 @@ export default function GraphView() {
     }
   }, [fromId, toId]);
 
-  // LLM Threat Briefing generation
+  // Live AI Threat Reasoning generation
   const runExplainPath = useCallback(async () => {
     if (!pathResult || !pathResult.paths || pathResult.paths.length === 0) return;
     setIsGeneratingBriefing(true);
-    setStatus('Generating decoupled threat narration & MITRE ATT&CK briefing...');
+    setStatus('ANALYZING CURRENT ATTACK PATH with NVIDIA NIM...');
 
     try {
       const best = pathResult.paths[0];
-      const briefing = await explainPath(fromId, toId, best);
+      const briefing = await explainPath(fromId, toId, best, nvidiaApiKey);
       setLlmBriefing(briefing);
       setActiveTab('briefing');
-      setStatus('Threat intelligence briefing generated successfully.');
+      if (briefing.isLive) {
+        setStatus(`Live AI analysis complete via NVIDIA NIM (${briefing.model || 'Llama-3.1-70B'}).`);
+      } else {
+        setStatus('Attack path analyzed via deterministic graph intelligence engine.');
+      }
     } catch (err) {
       setStatus(`Failed to generate briefing: ${err.message}`);
     } finally {
       setIsGeneratingBriefing(false);
     }
-  }, [pathResult, fromId, toId]);
+  }, [pathResult, fromId, toId, nvidiaApiKey]);
 
   // Live judge scenario injection
   const handleInject = async (e) => {
@@ -479,7 +487,7 @@ export default function GraphView() {
                 if (!llmBriefing && pathResult?.paths?.length) runExplainPath();
               }}
             >
-              LLM Briefing
+              Live AI Reasoning
             </button>
           </div>
 
@@ -536,7 +544,7 @@ export default function GraphView() {
                         onClick={runExplainPath}
                         disabled={isGeneratingBriefing}
                       >
-                        {isGeneratingBriefing ? 'Analyzing...' : 'Generate LLM Briefing'}
+                        {isGeneratingBriefing ? 'ANALYZING ATTACK PATH...' : 'Explain Path (Live AI)'}
                       </button>
                     </div>
 
@@ -683,57 +691,303 @@ export default function GraphView() {
               </div>
             )}
 
-            {/* TAB 3: LLM THREAT BRIEFING */}
+            {/* TAB 3: LIVE AI REASONING */}
             {activeTab === 'briefing' && (
               <div>
-                {llmBriefing ? (
-                  <div style={{ fontSize: 12, lineHeight: 1.5 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                      <span className={`badge ${llmBriefing.threatLevel === 'CRITICAL' ? 'badge-critical' : 'badge-high'}`}>
-                        {llmBriefing.threatLevel} THREAT
-                      </span>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent-cyan)' }}>
-                        Risk Score: {llmBriefing.riskScore}/100
+                {/* Live AI Status Bar */}
+                {isGeneratingBriefing ? (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 12px',
+                    background: 'rgba(245, 158, 11, 0.1)',
+                    border: '1px solid rgba(245, 158, 11, 0.35)',
+                    borderRadius: 6,
+                    marginBottom: 14,
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#fbbf24', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
+                      <span className="live-pulse-dot" style={{ width: 8, height: 8, borderRadius: '50%', background: '#fbbf24', display: 'inline-block' }} />
+                      ANALYZING CURRENT ATTACK PATH...
+                    </div>
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>NVIDIA NIM</span>
+                  </div>
+                ) : llmBriefing ? (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 12px',
+                    background: llmBriefing.isLive ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.08)',
+                    border: `1px solid ${llmBriefing.isLive ? 'rgba(16, 185, 129, 0.35)' : 'rgba(245, 158, 11, 0.3)'}`,
+                    borderRadius: 6,
+                    marginBottom: 14,
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: llmBriefing.isLive ? '#10b981' : '#f59e0b',
+                        boxShadow: llmBriefing.isLive ? '0 0 8px #10b981' : '0 0 8px #f59e0b',
+                        display: 'inline-block',
+                      }} />
+                      <span style={{
+                        fontSize: 11,
+                        fontWeight: 800,
+                        letterSpacing: '0.05em',
+                        color: llmBriefing.isLive ? '#34d399' : '#fbbf24',
+                      }}>
+                        {llmBriefing.isLive ? '● AI ANALYSIS COMPLETE' : '● DETERMINISTIC GRAPH ANALYSIS'}
                       </span>
                     </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span className="badge" style={{
+                        fontSize: 10,
+                        background: 'rgba(56, 189, 248, 0.12)',
+                        color: 'var(--accent-cyan)',
+                        border: '1px solid rgba(56, 189, 248, 0.25)',
+                      }}>
+                        {llmBriefing.isLive ? (llmBriefing.model || 'NVIDIA NIM') : 'Neo4j Graph Engine'}
+                      </span>
+                      <button
+                        onClick={() => setShowApiKeyModal(true)}
+                        title="Configure NVIDIA NIM API Key"
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'var(--text-muted)',
+                          cursor: 'pointer',
+                          fontSize: 12,
+                          padding: '0 2px',
+                        }}
+                      >
+                        ⚙️
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 12px',
+                    background: 'rgba(6, 182, 212, 0.08)',
+                    border: '1px solid rgba(6, 182, 212, 0.25)',
+                    borderRadius: 6,
+                    marginBottom: 14,
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--accent-cyan)', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent-cyan)', display: 'inline-block' }} />
+                      ● LIVE AI ANALYSIS
+                    </div>
+                    <button
+                      onClick={() => setShowApiKeyModal(true)}
+                      title="Configure NVIDIA NIM API Key"
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--text-muted)',
+                        cursor: 'pointer',
+                        fontSize: 12,
+                      }}
+                    >
+                      ⚙️
+                    </button>
+                  </div>
+                )}
 
+                {/* Graceful Fallback Notice Banner */}
+                {llmBriefing && !llmBriefing.isLive && llmBriefing.notice && (
+                  <div style={{
+                    background: 'rgba(245, 158, 11, 0.08)',
+                    border: '1px solid rgba(245, 158, 11, 0.3)',
+                    borderRadius: 6,
+                    padding: '8px 12px',
+                    marginBottom: 14,
+                    fontSize: 11,
+                    color: '#fbbf24',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 8,
+                  }}>
+                    <span>⚠️ {llmBriefing.notice}</span>
+                    <button
+                      className="btn-subtle"
+                      style={{ fontSize: 10, padding: '3px 8px', color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.4)', whiteSpace: 'nowrap' }}
+                      onClick={() => setShowApiKeyModal(true)}
+                    >
+                      Add Key
+                    </button>
+                  </div>
+                )}
+
+                {llmBriefing ? (
+                  <div style={{ fontSize: 12, lineHeight: 1.5 }}>
+                    {/* Severity, Risk & Actions Strip */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span className={`badge ${
+                          (llmBriefing.severity || llmBriefing.threatLevel) === 'CRITICAL' ? 'badge-critical' :
+                          (llmBriefing.severity || llmBriefing.threatLevel) === 'HIGH' ? 'badge-high' :
+                          (llmBriefing.severity || llmBriefing.threatLevel) === 'MEDIUM' ? 'badge-medium' : 'badge-low'
+                        }`}>
+                          {(llmBriefing.severity || llmBriefing.threatLevel)} SEVERITY
+                        </span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent-cyan)' }}>
+                          Risk Score: {llmBriefing.riskScore || llmBriefing.requestPayload?.path?.riskScore}/100
+                        </span>
+                      </div>
+                      <button
+                        className="btn-subtle"
+                        style={{ fontSize: 11, padding: '3px 8px', display: 'flex', alignItems: 'center', gap: 4 }}
+                        onClick={runExplainPath}
+                        disabled={isGeneratingBriefing}
+                      >
+                        🔄 Re-run Analysis
+                      </button>
+                    </div>
+
+                    {/* Executive Summary */}
                     <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: '#fff' }}>EXECUTIVE SUMMARY</div>
-                    <p style={{ color: '#cbd5e1', marginBottom: 14, background: '#0a0f19', padding: 10, borderRadius: 6 }}>
+                    <p style={{ color: '#cbd5e1', marginBottom: 14, background: '#0a0f19', padding: 10, borderRadius: 6, border: '1px solid var(--border-subtle)', lineHeight: 1.6 }}>
                       {llmBriefing.executiveSummary}
                     </p>
 
-                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: '#fff' }}>ATTACK CHAIN TECHNIQUES (MITRE ATT&CK)</div>
+                    {/* Attack Narrative */}
+                    {llmBriefing.attackNarrative && (
+                      <div style={{ marginBottom: 14 }}>
+                        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: '#fff' }}>ATTACK NARRATIVE</div>
+                        <div style={{ color: '#94a3b8', background: 'var(--bg-card)', padding: 10, borderRadius: 6, border: '1px solid var(--border-subtle)', fontSize: 11, lineHeight: 1.6 }}>
+                          {llmBriefing.attackNarrative}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Primary Chokepoint */}
+                    {llmBriefing.primaryChokepoint && (
+                      <div style={{ marginBottom: 14 }}>
+                        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: '#fff' }}>PRIMARY CHOKEPOINT</div>
+                        <div style={{
+                          background: 'rgba(239, 68, 68, 0.08)',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          borderRadius: 6,
+                          padding: 10,
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                            <span className="badge badge-critical" style={{ fontSize: 10 }}>
+                              Pivot Vector: {llmBriefing.primaryChokepoint.relationship}
+                            </span>
+                            {pathResult?.paths?.[0]?.steps?.find((s) => s.relationship === llmBriefing.primaryChokepoint.relationship) && (
+                              <button
+                                className="btn-subtle"
+                                style={{ fontSize: 10, padding: '2px 8px', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.4)' }}
+                                onClick={() => {
+                                  const step = pathResult.paths[0].steps.find((s) => s.relationship === llmBriefing.primaryChokepoint.relationship);
+                                  if (step) runRemediationOnEdge(step.relId, `${step.from} -[${step.relationship}]-> ${step.to}`);
+                                }}
+                              >
+                                Revoke Chokepoint Edge
+                              </button>
+                            )}
+                          </div>
+                          <div style={{ color: '#e2e8f0', fontSize: 11, lineHeight: 1.5 }}>
+                            {llmBriefing.primaryChokepoint.reason}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Verified Facts from Graph */}
+                    {llmBriefing.verifiedFacts && llmBriefing.verifiedFacts.length > 0 && (
+                      <div style={{ marginBottom: 14 }}>
+                        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: '#fff' }}>VERIFIED GRAPH FACTS</div>
+                        <ul style={{ paddingLeft: 16, color: '#94a3b8', fontSize: 11, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          {llmBriefing.verifiedFacts.map((fact, idx) => (
+                            <li key={idx} style={{ color: '#cbd5e1' }}>{fact}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Step-by-Step MITRE ATT&CK Analysis */}
+                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: '#fff' }}>STEP ANALYSIS (MITRE ATT&CK)</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
-                      {llmBriefing.chainBreakdown.map((item, idx) => (
+                      {(llmBriefing.stepAnalysis || []).map((item, idx) => (
                         <div key={idx} style={{ background: 'var(--bg-card)', padding: 10, borderRadius: 6, border: '1px solid var(--border-subtle)' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, color: 'var(--accent-amber)', fontSize: 11 }}>
-                            <span>Hop {item.hopNumber}: {item.source} -&gt; {item.target}</span>
-                            <span className="badge badge-medium">{item.technique}</span>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, flexWrap: 'wrap', gap: 4 }}>
+                            <span style={{ fontWeight: 600, color: 'var(--accent-amber)', fontSize: 11 }}>
+                              Hop {idx + 1}: [{item.relationship}]
+                            </span>
+                            <span className="badge badge-medium" style={{ fontSize: 10 }}>{item.mitreTechnique}</span>
                           </div>
-                          <div style={{ marginTop: 4, color: '#e2e8f0', fontSize: 12 }}>{item.attackAction}</div>
-                          <div style={{ marginTop: 4, fontSize: 11, color: 'var(--text-dim)' }}>
-                            <strong>Detection:</strong> {item.detectionVector}
-                          </div>
+                          <div style={{ color: '#e2e8f0', fontSize: 11, lineHeight: 1.5 }}>{item.explanation}</div>
                         </div>
                       ))}
                     </div>
 
-                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: '#fff' }}>RECOMMENDED REMEDIATION PLAYBOOK</div>
-                    <ul style={{ paddingLeft: 16, color: '#94a3b8' }}>
-                      {llmBriefing.remediationPlaybook.map((rule, idx) => (
-                        <li key={idx} style={{ marginBottom: 6 }}>{rule}</li>
+                    {/* Detection Opportunities */}
+                    {llmBriefing.detectionOpportunities && llmBriefing.detectionOpportunities.length > 0 && (
+                      <div style={{ marginBottom: 14 }}>
+                        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: '#fff' }}>DETECTION OPPORTUNITIES</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          {llmBriefing.detectionOpportunities.map((det, idx) => (
+                            <div key={idx} style={{ background: '#0a0e17', padding: '8px 10px', borderRadius: 6, border: '1px solid var(--border-subtle)', fontSize: 11, color: '#38bdf8' }}>
+                              <strong style={{ color: '#fff' }}>Vector {idx + 1}:</strong> {det}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Recommendations */}
+                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: '#fff' }}>REMEDIATION PLAYBOOK</div>
+                    <ul style={{ paddingLeft: 16, color: '#94a3b8', fontSize: 11, display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
+                      {(llmBriefing.recommendations || llmBriefing.remediationPlaybook || []).map((rule, idx) => (
+                        <li key={idx} style={{ color: '#cbd5e1' }}>{rule}</li>
                       ))}
                     </ul>
+
+                    {/* Graph Reasoning & Threat Model Rationale */}
+                    {llmBriefing.reasoning && (
+                      <div style={{ marginBottom: 14 }}>
+                        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: '#fff' }}>AI GRAPH REASONING</div>
+                        <div style={{ color: '#94a3b8', background: '#0d131f', padding: 10, borderRadius: 6, border: '1px solid rgba(59, 130, 246, 0.2)', fontSize: 11, lineHeight: 1.6 }}>
+                          {llmBriefing.reasoning}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Inspect API Payload Accordion */}
+                    <details style={{ background: '#07090e', border: '1px solid var(--border-subtle)', borderRadius: 6, padding: '8px 10px', fontSize: 11, marginBottom: 10 }}>
+                      <summary style={{ cursor: 'pointer', color: 'var(--accent-cyan)', fontWeight: 600 }}>
+                        Inspect Live API Request Payload
+                      </summary>
+                      <pre style={{
+                        marginTop: 8,
+                        padding: 8,
+                        background: '#04060a',
+                        borderRadius: 4,
+                        fontSize: 10,
+                        fontFamily: 'var(--font-mono)',
+                        color: '#a5b4fc',
+                        overflowX: 'auto',
+                        maxHeight: 200,
+                      }}>
+                        {JSON.stringify(llmBriefing.requestPayload || llmBriefing.payload || {}, null, 2)}
+                      </pre>
+                    </details>
                   </div>
                 ) : (
                   <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--text-dim)' }}>
-                    <div style={{ fontSize: 32, marginBottom: 8 }}>🤖</div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>Threat Narration Ready</div>
-                    <div style={{ fontSize: 12, marginTop: 4, marginBottom: 12 }}>
-                      Click below to generate a plain-English threat narration briefing with MITRE ATT&CK mapping.
+                    <div style={{ fontSize: 32, marginBottom: 8 }}>⚡</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>Live Threat Reasoning Ready</div>
+                    <div style={{ fontSize: 12, marginTop: 4, marginBottom: 16 }}>
+                      Analyze the active attack path using NVIDIA NIM or deterministic graph intelligence.
                     </div>
                     <button className="btn-primary" onClick={runExplainPath} disabled={isGeneratingBriefing}>
-                      {isGeneratingBriefing ? 'Generating...' : 'Generate Briefing Now'}
+                      {isGeneratingBriefing ? 'ANALYZING ATTACK PATH...' : 'Explain Current Attack Path'}
                     </button>
                   </div>
                 )}
@@ -937,6 +1191,78 @@ export default function GraphView() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* NVIDIA NIM API Key Modal */}
+      {showApiKeyModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(0, 0, 0, 0.75)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 100,
+        }}>
+          <div style={{
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border-active)',
+            borderRadius: 8,
+            padding: 24,
+            width: 440,
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <div style={{ fontWeight: 800, fontSize: 15, color: '#fff' }}>Configure NVIDIA NIM API Key</div>
+              <button
+                onClick={() => setShowApiKeyModal(false)}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: 18, cursor: 'pointer' }}
+              >
+                ×
+              </button>
+            </div>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.5 }}>
+              Optionally supply an NVIDIA NIM API key for live LLM reasoning (<code>meta/llama-3.1-70b-instruct</code>). If left blank, ZENITH utilizes its deterministic graph intelligence engine.
+            </p>
+            <input
+              type="password"
+              placeholder="nvapi-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+              value={nvidiaApiKey}
+              onChange={(e) => setNvidiaApiKey(e.target.value)}
+              style={{ width: '100%', marginBottom: 16, fontFamily: 'var(--font-mono)', fontSize: 12 }}
+            />
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className="btn-subtle"
+                onClick={() => {
+                  setNvidiaApiKey('');
+                  if (typeof window !== 'undefined') localStorage.removeItem('zenith_nvidia_api_key');
+                  setShowApiKeyModal(false);
+                }}
+              >
+                Clear Key
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    if (nvidiaApiKey.trim()) localStorage.setItem('zenith_nvidia_api_key', nvidiaApiKey.trim());
+                    else localStorage.removeItem('zenith_nvidia_api_key');
+                  }
+                  setShowApiKeyModal(false);
+                  if (pathResult?.paths?.length) runExplainPath();
+                }}
+              >
+                Save & Run Live Analysis
+              </button>
+            </div>
           </div>
         </div>
       )}

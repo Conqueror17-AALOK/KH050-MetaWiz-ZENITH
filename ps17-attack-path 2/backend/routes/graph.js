@@ -61,18 +61,37 @@ router.post('/simulate-remediation', async (req, res) => {
   }
 });
 
-// POST /api/explain-path (Phase 5 - Decoupled Threat Narration)
+// POST /api/explain-path (Live AI Reasoning Layer with NVIDIA NIM)
 router.post('/explain-path', async (req, res) => {
-  const { from, to, path } = req.body;
-  if (!path || !path.steps) {
-    return res.status(400).json({ error: 'Valid attack path object with steps is required' });
-  }
   try {
-    const explanation = await llmService.explainAttackPath(from, to, path);
+    const { from, to, path, apiKey, model } = req.body;
+    const headerApiKey = req.headers['x-nvidia-api-key'];
+    const activeApiKey = apiKey || headerApiKey || process.env.NVIDIA_API_KEY;
+
+    let payload;
+    if (req.body.source && req.body.target && req.body.steps) {
+      // Incoming body is already the canonical structured payload
+      payload = req.body;
+    } else if (path && path.steps) {
+      // Construct structured payload from path object
+      payload = llmService.buildAttackPathPayload(from, to, path);
+    } else {
+      return res.status(400).json({ error: 'Valid attack path object with steps or structured payload is required' });
+    }
+
+    const explanation = await llmService.explainAttackPath(payload, {
+      apiKey: activeApiKey,
+      model,
+      fromId: from,
+      toId: to,
+    });
     res.json(explanation);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to generate threat explanation' });
+    console.error('[ZENITH API] Error in /api/explain-path:', err);
+    res.status(500).json({
+      error: 'Failed to generate threat explanation',
+      message: err.message,
+    });
   }
 });
 
