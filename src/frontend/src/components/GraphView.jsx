@@ -1505,16 +1505,32 @@ export default function GraphView() {
               const key = `${l.source.id || l.source}->${l.target.id || l.target}`;
               if (highlightLinks.has(key)) return '#ef4444';       // Neon red for primary path
               if (reroutedLinks.has(key)) return '#f59e0b';       // Golden amber for rerouted path
-              return 'rgba(255, 255, 255, 0.12)';
+              if (blastNodes.size > 0 && blastNodes.has(l.source.id || l.source) && blastNodes.has(l.target.id || l.target)) {
+                return 'rgba(245, 158, 11, 0.45)';               // Amber for blast cascade links
+              }
+              return 'rgba(160, 175, 200, 0.42)';                 // Clearly visible crisp thin lines for demo presentation
             }}
             linkWidth={(l) => {
               const key = `${l.source.id || l.source}->${l.target.id || l.target}`;
               if (highlightLinks.has(key)) return 3.5;
               if (reroutedLinks.has(key)) return 3.0;
-              return 1.0;
+              if (blastNodes.size > 0 && blastNodes.has(l.source.id || l.source) && blastNodes.has(l.target.id || l.target)) {
+                return 1.6;
+              }
+              return 1.1;
             }}
-            linkDirectionalArrowLength={4}
-            linkDirectionalArrowRelPos={0.9}
+            linkDirectionalArrowLength={(l) => {
+              const key = `${l.source.id || l.source}->${l.target.id || l.target}`;
+              if (highlightLinks.has(key) || reroutedLinks.has(key)) return 5.0;
+              return 3.5;
+            }}
+            linkDirectionalArrowRelPos={0.92}
+            linkDirectionalArrowColor={(l) => {
+              const key = `${l.source.id || l.source}->${l.target.id || l.target}`;
+              if (highlightLinks.has(key)) return '#ef4444';
+              if (reroutedLinks.has(key)) return '#f59e0b';
+              return 'rgba(160, 175, 200, 0.48)';
+            }}
             linkDirectionalParticles={(l) => {
               const key = `${l.source.id || l.source}->${l.target.id || l.target}`;
               if (highlightLinks.has(key)) return 4;
