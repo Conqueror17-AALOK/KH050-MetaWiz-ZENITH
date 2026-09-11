@@ -272,7 +272,7 @@ export default function GraphView() {
   }, [graphData.nodes]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', background: '#07090e' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', background: '#000000' }}>
       {/* Top Telemetry & Brand Bar */}
       <header style={{
         height: 54,
@@ -281,7 +281,7 @@ export default function GraphView() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        background: 'rgba(13, 17, 26, 0.95)',
+        background: 'rgba(8, 8, 8, 0.95)',
         zIndex: 10,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -352,7 +352,7 @@ export default function GraphView() {
           {selectedNode && (
             <div style={{
               padding: '10px 16px',
-              background: '#0d1524',
+              background: '#0a0a0a',
               borderBottom: '1px solid var(--border-subtle)',
               display: 'flex',
               flexDirection: 'column',
@@ -1405,21 +1405,21 @@ export default function GraphView() {
                     {llmBriefing.reasoning && (
                       <div style={{ marginBottom: 14 }}>
                         <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: '#fff' }}>AI GRAPH REASONING</div>
-                        <div style={{ color: '#94a3b8', background: '#0d131f', padding: 10, borderRadius: 6, border: '1px solid rgba(59, 130, 246, 0.2)', fontSize: 11, lineHeight: 1.6 }}>
+                        <div style={{ color: '#94a3b8', background: '#0a0a0a', padding: 10, borderRadius: 6, border: '1px solid rgba(255, 255, 255, 0.15)', fontSize: 11, lineHeight: 1.6 }}>
                           {llmBriefing.reasoning}
                         </div>
                       </div>
                     )}
 
                     {/* Inspect API Payload Accordion */}
-                    <details style={{ background: '#07090e', border: '1px solid var(--border-subtle)', borderRadius: 6, padding: '8px 10px', fontSize: 11, marginBottom: 10 }}>
+                    <details style={{ background: '#080808', border: '1px solid var(--border-subtle)', borderRadius: 6, padding: '8px 10px', fontSize: 11, marginBottom: 10 }}>
                       <summary style={{ cursor: 'pointer', color: 'var(--accent-cyan)', fontWeight: 600 }}>
                         Inspect Live API Request Payload
                       </summary>
                       <pre style={{
                         marginTop: 8,
                         padding: 8,
-                        background: '#04060a',
+                        background: '#040404',
                         borderRadius: 4,
                         fontSize: 10,
                         fontFamily: 'var(--font-mono)',
@@ -1466,7 +1466,7 @@ export default function GraphView() {
         </aside>
 
         {/* Center Force Graph Canvas */}
-        <div style={{ flex: 1, position: 'relative', background: '#07090e' }}>
+        <div style={{ flex: 1, position: 'relative', background: '#000000' }}>
           <ForceGraph2D
             ref={fgRef}
             graphData={graphData}
@@ -1542,7 +1542,7 @@ export default function GraphView() {
             }}
             onNodeClick={handleNodeClick}
             onLinkClick={handleLinkClick}
-            backgroundColor="#07090e"
+            backgroundColor="#000000"
           />
 
           {/* Canvas Floating Controls */}
