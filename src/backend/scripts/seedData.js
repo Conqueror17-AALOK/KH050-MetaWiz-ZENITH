@@ -98,20 +98,25 @@ async function seed() {
     }
 
     const edges = [];
+    const plantedUsers = new Set(['user-3', 'user-17', 'user-42', 'user-29']);
+    const workstationIds = machineIds.filter((_, i) => i >= 8);
+    const memberServerIds = machineIds.filter((_, i) => i >= 2 && i < 8 && i !== 5);
+    const standardTargetMachines = [...workstationIds, ...memberServerIds];
 
     // Random realistic enterprise relationships
     for (const uid of userIds) {
-      // Users belong to 1-3 groups
+      // Users belong to 1-2 non-admin enterprise groups
       edges.push({ from: uid, to: pick(groupIds), type: R.MEMBER_OF.label });
-      if (Math.random() < 0.4) edges.push({ from: uid, to: pick(groupIds), type: R.MEMBER_OF.label });
+      if (Math.random() < 0.3) edges.push({ from: uid, to: pick(groupIds), type: R.MEMBER_OF.label });
 
-      // Interactive RDP access on workstations and some servers
-      if (Math.random() < 0.35) {
-        edges.push({ from: uid, to: pick(machineIds), type: R.CAN_RDP.label });
-      }
-      // Cached credential sessions on workstations
-      if (Math.random() < 0.25) {
-        edges.push({ from: uid, to: pick(machineIds), type: R.HAS_SESSION.label });
+      // Non-planted users have standard workstation/server interactive RDP and sessions
+      if (!plantedUsers.has(uid)) {
+        if (Math.random() < 0.35) {
+          edges.push({ from: uid, to: pick(standardTargetMachines), type: R.CAN_RDP.label });
+        }
+        if (Math.random() < 0.25) {
+          edges.push({ from: uid, to: pick(standardTargetMachines), type: R.HAS_SESSION.label });
+        }
       }
     }
 
@@ -124,18 +129,27 @@ async function seed() {
     }
 
     // Workstations and member servers trust Domain Controllers
+    // Intermediate machines machine-5, machine-8, machine-12 are preserved without direct DC trust to protect attack path chokepoints
+    const bypassedMachines = new Set(['machine-0', 'machine-1', 'machine-5', 'machine-8', 'machine-12']);
     for (const mid of machineIds) {
-      if (mid !== 'machine-0' && mid !== 'machine-1' && Math.random() < 0.2) {
+      if (!bypassedMachines.has(mid) && Math.random() < 0.25) {
         edges.push({ from: mid, to: 'machine-0', type: R.TRUSTED_BY.label });
       }
     }
 
-    // GPO deployment to workstations
+    // GPO deployment to all enterprise workstations
     for (let i = 8; i < NUM_MACHINES; i++) {
-      if (Math.random() < 0.4) {
-        edges.push({ from: 'gpo-workstation-policy', to: `machine-${i}`, type: R.GPO_APPLIED_TO.label });
-      }
+      edges.push({ from: 'gpo-workstation-policy', to: `machine-${i}`, type: R.GPO_APPLIED_TO.label });
     }
+
+    // Default Domain Policy GPO deployment (enforced across Domain Controllers and member servers)
+    const defaultGpoTargets = ['machine-0', 'machine-1', 'machine-2', 'machine-3', 'machine-4', 'machine-6', 'machine-7'];
+    for (const targetId of defaultGpoTargets) {
+      edges.push({ from: 'gpo-default-domain-policy', to: targetId, type: R.GPO_APPLIED_TO.label });
+    }
+
+    // Domain Admins hold GenericAll control over the Default Domain Policy
+    edges.push({ from: 'grp-domain-admins', to: 'gpo-default-domain-policy', type: R.GENERIC_ALL.label });
 
     // --- Planted Attack Path #1 (3 hops): RDP -> LSASS Cached Session -> Password Reset ---
     const plantedUser1 = 'user-3';
