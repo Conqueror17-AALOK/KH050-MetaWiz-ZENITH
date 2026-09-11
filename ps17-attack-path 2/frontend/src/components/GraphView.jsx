@@ -162,11 +162,14 @@ export default function GraphView() {
         // Chokepoint severed!
         setHighlightLinks(new Set());
         setReroutedLinks(new Set());
+        setHighlightNodes(new Set([fromId, toId]));
         setStatus(`REMEDIATION SUCCESSFUL: Revoking edge eliminated all attack paths between '${fromId}' and '${toId}'!`);
       } else if (result.reRoutedPath) {
         // Path rerouted
         const reroutedLinkKeys = new Set(result.reRoutedPath.steps.map((s) => `${s.from}->${s.to}`));
+        setHighlightLinks(new Set());
         setReroutedLinks(reroutedLinkKeys);
+        setHighlightNodes(new Set(result.reRoutedPath.steps.flatMap((s) => [s.from, s.to])));
         setStatus(`PATH REROUTED: Attack path survives via ${result.remainingPathCount} alternate route(s). Alternate path rendered in amber.`);
       }
     } catch (err) {
@@ -291,15 +294,11 @@ export default function GraphView() {
             + Live Inject Edge
           </button>
           <a
-            href="http://localhost:5173"
+            href="/landing-page/index.html"
             target="_blank"
             rel="noreferrer"
             className="btn-subtle"
             style={{ textDecoration: 'none' }}
-            onClick={(e) => {
-              e.preventDefault();
-              window.open('/landing-page/index.html', '_blank') || window.open('../../landing-page/index.html', '_blank');
-            }}
           >
             Landing Page
           </a>
@@ -318,6 +317,58 @@ export default function GraphView() {
           backdropFilter: 'blur(12px)',
           zIndex: 5,
         }}>
+          {/* Selected Node Quick-Actions Inspector */}
+          {selectedNode && (
+            <div style={{
+              padding: '10px 16px',
+              background: '#0d1524',
+              borderBottom: '1px solid var(--border-subtle)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 6,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent-cyan)' }}>SELECTED ENTITY</span>
+                <button
+                  style={{ background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: 12, cursor: 'pointer' }}
+                  onClick={() => setSelectedNode(null)}
+                >
+                  ✕
+                </button>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 13, color: '#fff' }}>{selectedNode.name}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>{selectedNode.id}</div>
+                </div>
+                <span style={{ fontSize: 11, color: TYPE_COLORS[selectedNode.type] || '#fff' }}>{selectedNode.type}</span>
+              </div>
+              <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                <button
+                  className="btn-subtle"
+                  style={{ flex: 1, fontSize: 10, padding: '4px 6px' }}
+                  onClick={() => setFromId(selectedNode.id)}
+                >
+                  Set as Source
+                </button>
+                <button
+                  className="btn-subtle"
+                  style={{ flex: 1, fontSize: 10, padding: '4px 6px' }}
+                  onClick={() => setToId(selectedNode.id)}
+                >
+                  Set as Target
+                </button>
+                <button
+                  className="btn-subtle"
+                  style={{ flex: 1, fontSize: 10, padding: '4px 6px', color: 'var(--accent-amber)' }}
+                  onClick={() => runBlastRadius(selectedNode.id)}
+                >
+                  Blast Radius
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Query Inputs Card */}
           <div style={{ padding: 16, borderBottom: '1px solid var(--border-subtle)' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
@@ -451,11 +502,27 @@ export default function GraphView() {
                     <div style={{ fontWeight: 700, fontSize: 13, color: remediationState.pathEliminated ? '#34d399' : '#fbbf24', marginBottom: 4 }}>
                       {remediationState.pathEliminated ? 'CHOKEPOINT NEUTRALIZED' : 'ATTACK PATH REROUTED'}
                     </div>
-                    <div style={{ fontSize: 12, color: '#e2e8f0' }}>
+                    <div style={{ fontSize: 12, color: '#e2e8f0', marginBottom: 8 }}>
                       {remediationState.pathEliminated
                         ? 'Revoking this privilege broke the attack chain. No alternate route exists to target.'
                         : `Privilege revoked, but path reroutes via ${remediationState.remainingPathCount} alternate route(s). Highlighted in golden amber.`}
                     </div>
+                    <button
+                      className="btn-subtle"
+                      style={{ fontSize: 11, width: '100%', padding: '4px 8px' }}
+                      onClick={() => {
+                        setRemediationState(null);
+                        setReroutedLinks(new Set());
+                        if (pathResult?.paths?.length > 0) {
+                          const best = pathResult.paths[0];
+                          setHighlightLinks(new Set(best.steps.map((s) => `${s.from}->${s.to}`)));
+                          setHighlightNodes(new Set(best.steps.flatMap((s) => [s.from, s.to])));
+                          setStatus(`Restored primary attack path (${best.hops} hops, Risk ${best.riskScore}/100).`);
+                        }
+                      }}
+                    >
+                      ↺ Reset Remediation Simulation
+                    </button>
                   </div>
                 )}
 
@@ -699,6 +766,7 @@ export default function GraphView() {
             graphData={graphData}
             nodeId="id"
             nodeLabel={(n) => `${n.name} (${n.type})${n.critical ? ' [TIER-0 CRITICAL]' : ''}`}
+            linkLabel={(l) => `${l.type} (Exploit Difficulty Cost: ${l.weight || 2})`}
             nodeColor={(n) => {
               if (highlightNodes.has(n.id)) return '#ef4444'; // Red for primary path
               if (blastNodes.has(n.id)) return '#f59e0b';    // Amber for blast radius
