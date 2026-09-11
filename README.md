@@ -5,7 +5,7 @@
 
 ---
 
-## 📌 Executive Summary
+## Executive Summary
 
 **ZENITH** is an enterprise-grade identity privilege graph and attack path analyzer inspired by SpecterOps BloodHound. It models organizational identities (users, groups, service accounts, machines) as a directed property graph in **Neo4j** and uses real **Cypher graph algorithms** to mathematically discover, cost-weight, and remediate dangerous multi-hop privilege escalation routes.
 
@@ -13,7 +13,7 @@ ZENITH strictly adheres to the principle of **deterministic mathematical path ca
 
 ---
 
-## 🏛️ System Architecture
+## System Architecture
 
 ![ZENITH System Architecture](docs/architecture.png)
 
@@ -47,7 +47,7 @@ ZENITH strictly adheres to the principle of **deterministic mathematical path ca
 
 ---
 
-## 📂 Repository Layout
+## Repository Layout
 
 This repository conforms strictly to the official Hackathon submission structure:
 
@@ -93,7 +93,7 @@ KH001-TeamName/
 
 ---
 
-## 🚀 Quick Start (Running Locally)
+## Quick Start (Running Locally)
 
 ### 1. Prerequisites
 - **Node.js**: `v18+` (Tested on Node `v20` / `v26`)
@@ -149,7 +149,7 @@ npm run dev
 
 ---
 
-## 🧪 Automated Diagnostic Verification
+## Automated Diagnostic Verification
 
 Execute the comprehensive 15-test diagnostic verification suite covering all graph traversal, blast radius calculations, chokepoint severance, and schema validations:
 
@@ -188,7 +188,7 @@ TOTAL: 15 | PASSED: 15 | FAILED: 0
 
 ---
 
-## 📸 Screenshots & Showcase
+## Screenshots & Showcase
 
 ### Primary Attack Path & Force Graph Console
 ![Attack Path Console](screenshots/screenshot-1.png)
@@ -198,7 +198,7 @@ TOTAL: 15 | PASSED: 15 | FAILED: 0
 
 ---
 
-## 🛡️ Key Innovation Highlights
+## Key Innovation Highlights
 
 1. **Deterministic Dijkstra Graph Traversal**: Discovers shortest and cheapest attack paths using exact Cypher variable-length walk queries (`MATCH p = (start)-[*1..6]->(end)`).
 2. **Interactive Chokepoint Remediation**: Simulates revoking individual privileges and instantly determines whether attack paths are eliminated or rerouted.
@@ -209,5 +209,5 @@ TOTAL: 15 | PASSED: 15 | FAILED: 0
 
 ---
 
-## 📜 License
+## License
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.

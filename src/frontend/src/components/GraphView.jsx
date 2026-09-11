@@ -364,7 +364,7 @@ export default function GraphView() {
                   style={{ background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: 12, cursor: 'pointer' }}
                   onClick={() => setSelectedNode(null)}
                 >
-                  ✕
+                  &times;
                 </button>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -510,7 +510,7 @@ export default function GraphView() {
                 syncCalcFromActivePath();
               }}
             >
-              ⚡ Risk Calc
+              Risk Calculator
             </button>
             <button
               style={{
@@ -619,7 +619,7 @@ export default function GraphView() {
                                 }}
                                 title="Open this path parameters in the interactive Risk Calculator"
                               >
-                                ⚡ Calc
+                                Calc
                               </button>
                             </div>
                             <span style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
@@ -667,7 +667,7 @@ export default function GraphView() {
                   </div>
                 ) : (
                   <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--text-dim)' }}>
-                    <div style={{ fontSize: 32, marginBottom: 8 }}>🛡️</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', letterSpacing: '0.08em', marginBottom: 8 }}>GRAPH READY</div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>No Attack Paths Computed</div>
                     <div style={{ fontSize: 12, marginTop: 4 }}>
                       Select a Source and Target node above and click <strong>Find Attack Paths</strong>, or choose a <strong>Demo Preset</strong>.
@@ -737,7 +737,7 @@ export default function GraphView() {
                   </div>
                 ) : (
                   <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--text-dim)' }}>
-                    <div style={{ fontSize: 32, marginBottom: 8 }}>💥</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', letterSpacing: '0.08em', marginBottom: 8 }}>BLAST ENGINE READY</div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>Blast Radius Uncalculated</div>
                     <div style={{ fontSize: 12, marginTop: 4 }}>
                       Click any node on the graph canvas or enter an ID above, then click <strong>Blast Radius</strong>.
@@ -759,7 +759,6 @@ export default function GraphView() {
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 13 }}>⚡</span>
                       <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent-emerald)', letterSpacing: '0.05em' }}>
                         DYNAMIC RISK CALCULATOR
                       </span>
@@ -800,7 +799,7 @@ export default function GraphView() {
                       }}
                       title={pathResult?.paths?.length ? 'Pull hops, cost, and target tier from active attack path' : 'Find an attack path first to sync'}
                     >
-                      <span>🔄</span> Sync From Active Path
+                      Sync From Active Path
                     </button>
                     <button
                       onClick={() => {
@@ -1154,8 +1153,8 @@ export default function GraphView() {
                     borderRadius: 6,
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent-blue)', textTransform: 'uppercase' }}>
-                        🛡️ Remediation Impact Simulator
+                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent-blue)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Remediation Impact Simulator
                       </span>
                       <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--accent-emerald)' }}>
                         Est. Risk Reduction: -{Math.min(calculatedRiskScore - 15, 45)} pts
@@ -1175,7 +1174,7 @@ export default function GraphView() {
                         }
                       }}
                     >
-                      🛡️ Simulate Severing Chokepoint in Graph
+                      Simulate Severing Chokepoint in Graph
                     </button>
                   </div>
                 )}
@@ -1289,7 +1288,7 @@ export default function GraphView() {
                             setActiveTab('calc');
                           }}
                         >
-                          ⚡ Test in Calculator
+                          Test in Calculator
                         </button>
                         <button
                           className="btn-subtle"
@@ -1297,7 +1296,7 @@ export default function GraphView() {
                           onClick={runExplainPath}
                           disabled={isGeneratingBriefing}
                         >
-                          🔄 Re-run
+                          Re-run
                         </button>
                       </div>
                     </div>
@@ -1434,7 +1433,7 @@ export default function GraphView() {
                   </div>
                 ) : (
                   <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--text-dim)' }}>
-                    <div style={{ fontSize: 32, marginBottom: 8 }}>⚡</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', letterSpacing: '0.08em', marginBottom: 8 }}>AI ENGINE READY</div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>Live Threat Reasoning Ready</div>
                     <div style={{ fontSize: 12, marginTop: 4, marginBottom: 16 }}>
                       Analyze the active attack path using NVIDIA NIM or deterministic graph intelligence.
@@ -1584,7 +1583,7 @@ export default function GraphView() {
                 style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 18, cursor: 'pointer' }}
                 onClick={() => setShowInjectModal(false)}
               >
-                ✕
+                &times;
               </button>
             </div>
             <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>

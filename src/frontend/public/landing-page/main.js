@@ -94,7 +94,7 @@
       gaugeFill.style.background = '#10b981';
 
       chokeBtn.classList.add('remediated');
-      chokeBtn.innerHTML = '✓ Chokepoint Severed (Click to Restore)';
+      chokeBtn.innerHTML = 'Chokepoint Severed (Click to Restore)';
 
       remedyMsg.style.display = 'block';
       remedyMsg.style.background = 'rgba(16, 185, 129, 0.15)';
@@ -113,7 +113,7 @@
         : 'linear-gradient(90deg, #3b82f6, #f59e0b)';
 
       chokeBtn.classList.remove('remediated');
-      chokeBtn.innerHTML = '⚡ Sever Chokepoint Privilege';
+      chokeBtn.innerHTML = 'Sever Chokepoint Privilege';
       remedyMsg.style.display = 'none';
     }
 
@@ -140,9 +140,9 @@
         html += `
           <div class="sim-arrow" style="${isCut ? 'opacity: 0.35;' : ''}">
             <span class="sim-arrow-label" style="${isCut ? 'text-decoration: line-through; color: #ef4444;' : ''}">
-              ${isCut ? '✂️ SEVERED' : edge.rel}
+              ${isCut ? '[SEVERED]' : edge.rel}
             </span>
-            <span class="sim-arrow-line">${isCut ? '✕' : '→'}</span>
+            <span class="sim-arrow-line">${isCut ? '--|--' : '→'}</span>
           </div>
         `;
       }
