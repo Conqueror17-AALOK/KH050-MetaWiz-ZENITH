@@ -8,7 +8,10 @@
     "dev:frontend": "npm run dev --prefix src/frontend",
     "dev": "npm run dev:backend & npm run dev:frontend",
     "seed": "npm run seed --prefix src/backend",
+    "seed:default": "npm run seed:default --prefix src/backend",
     "test": "npm test --prefix src/backend",
+    "test:adsynth": "npm run test:adsynth --prefix src/backend",
+    "import:adsynth": "npm run import:adsynth --prefix src/backend",
     "build": "npm run build --prefix src/frontend"
   },
   "keywords": [

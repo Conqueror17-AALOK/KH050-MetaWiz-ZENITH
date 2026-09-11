@@ -6,7 +6,11 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "seed": "node scripts/seedData.js"
+    "seed": "node scripts/seedData.js",
+    "seed:default": "node scripts/seedData.js",
+    "test": "node scripts/testSuite.js",
+    "test:adsynth": "node scripts/adsynthManager.js --test",
+    "import:adsynth": "node scripts/adsynthManager.js --import"
   },
   "dependencies": {
     "cors": "^2.8.5",

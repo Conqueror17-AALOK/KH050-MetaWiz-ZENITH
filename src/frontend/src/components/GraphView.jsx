@@ -8,6 +8,9 @@ import {
   explainPath,
   injectRelationship,
   getRelationshipTypes,
+  importAdsynth,
+  testAdsynth,
+  seedDefault,
 } from '../api';
 
 const TYPE_COLORS = {
@@ -15,20 +18,44 @@ const TYPE_COLORS = {
   Group: '#f59e0b',         // Amber
   ServiceAccount: '#ec4899',// Magenta
   Machine: '#10b981',       // Emerald
+  Computer: '#10b981',      // Emerald
+  Server: '#10b981',        // Emerald
+  SyncIdentity: '#a855f7',  // Purple
+  ServicePrincipal: '#818cf8', // Indigo
+  ManagedIdentity: '#06b6d4',  // Cyan
+  Tenant: '#f97316',        // Orange
+  Domain: '#eab308',        // Yellow
 };
 
-const PRESETS = [
-  { label: 'Demo 1: RDP Session (user-3)', from: 'user-3', to: 'grp-domain-admins', desc: 'RDP -> LSASS Cached Session -> Password Reset' },
-  { label: 'Demo 2: DCOM Trust (user-17)', from: 'user-17', to: 'grp-domain-admins', desc: 'DCOM Execution -> Machine Trust -> Session -> Admin' },
-  { label: 'Demo 3: GPO Abuse (user-42)', from: 'user-42', to: 'grp-domain-admins', desc: 'GenericAll ACL -> GPO Applied -> Session -> Admin' },
-  { label: 'Demo 4: Kerberoasting (user-29)', from: 'user-29', to: 'grp-domain-admins', desc: 'Kerberoastable SPN -> DC Admin -> Domain Admin' },
+const DEMO_PRESETS = [
+  { label: 'Benchmark 1: RDP Session (user-3)', from: 'user-3', to: 'grp-domain-admins', desc: 'RDP -> LSASS Cached Session -> Password Reset' },
+  { label: 'Benchmark 2: DCOM Trust (user-17)', from: 'user-17', to: 'grp-domain-admins', desc: 'DCOM Execution -> Machine Trust -> Session -> Admin' },
+  { label: 'Benchmark 3: GPO Abuse (user-42)', from: 'user-42', to: 'grp-domain-admins', desc: 'GenericAll ACL -> GPO Applied -> Session -> Admin' },
+  { label: 'Benchmark 4: Kerberoasting (user-29)', from: 'user-29', to: 'grp-domain-admins', desc: 'Kerberoastable SPN -> DC Admin -> Domain Admin' },
+];
+
+const ADSYNTH_PRESETS = [
+  { label: 'Scenario 1: Entra Sync (user-03)', from: 'user-03', to: 'grp-domain-admins', desc: 'HelpDesk RDP -> Entra Sync Session -> Global Admin' },
+  { label: 'Scenario 2: DC Backup (user-07)', from: 'user-07', to: 'grp-domain-admins', desc: 'WKSTN-04 RDP -> Backup Exec Session -> DC-01' },
+  { label: 'Scenario 3: Kerberoast (user-12)', from: 'user-12', to: 'grp-domain-admins', desc: 'SQL SPN Kerberoast -> Workstation Admins -> Domain Admins' },
+  { label: 'Scenario 4: GPO Abuse (user-18)', from: 'user-18', to: 'grp-domain-admins', desc: 'GenericAll ACL on Baseline GPO -> Entra Admin Session' },
 ];
 
 export default function GraphView() {
   const fgRef = useRef();
 
-  // Graph state
-  const [graphData, setGraphData] = useState({ nodes: [], links: [] });
+  // Dual Graph state (Benchmark vs ADSynth)
+  const [demoGraphData, setDemoGraphData] = useState({ nodes: [], links: [] });
+  const [adsynthGraphData, setAdsynthGraphData] = useState({ nodes: [], links: [] });
+
+  // Section state: 'demo' (Demo Graph Mode) | 'adsynth' (Import ADSynth Data)
+  const [activeSection, setActiveSection] = useState('demo');
+
+  // Currently displayed graph data based on active section
+  const graphData = useMemo(() => {
+    return activeSection === 'demo' ? demoGraphData : adsynthGraphData;
+  }, [activeSection, demoGraphData, adsynthGraphData]);
+
   const [fromId, setFromId] = useState('user-3');
   const [toId, setToId] = useState('grp-domain-admins');
   const [selectedNode, setSelectedNode] = useState(null);
@@ -91,42 +118,60 @@ export default function GraphView() {
   const [relationshipTypes, setRelationshipTypes] = useState({});
   const [injectStatus, setInjectStatus] = useState('');
 
+  // ADSynth Dataset Importer state
+  const [showAdsynthModal, setShowAdsynthModal] = useState(false);
+  const [adsynthPath, setAdsynthPath] = useState('data/adsynth');
+  const [adsynthLoading, setAdsynthLoading] = useState(false);
+  const [adsynthStatus, setAdsynthStatus] = useState('');
+  const [adsynthTestResult, setAdsynthTestResult] = useState(null);
+
   // Active tab in sidebar: 'paths' | 'blast' | 'briefing'
   const [activeTab, setActiveTab] = useState('paths');
 
-  // Load initial graph & relationship types
+  // Load initial graphs (both Demo Benchmark and ADSynth concurrently)
   const loadGraph = useCallback(async () => {
-    setStatus('Loading Neo4j identity graph...');
+    setStatus('Loading Neo4j identity graphs (Benchmark & ADSynth)...');
     try {
-      const [data, relTypes] = await Promise.all([
-        getGraph(),
+      const [demoData, adsynthData, relTypes] = await Promise.all([
+        getGraph('demo'),
+        getGraph('adsynth'),
         getRelationshipTypes().catch(() => ({})),
       ]);
-      setGraphData(data);
+      setDemoGraphData(demoData);
+      setAdsynthGraphData(adsynthData);
       setRelationshipTypes(relTypes);
-      setStatus(`Connected to Neo4j. Loaded ${data.nodes.length} nodes & ${data.links.length} privilege edges.`);
+
+      setStatus(`Connected to Neo4j. Benchmark: ${demoData.nodes.length} nodes • ADSynth: ${adsynthData.nodes.length} nodes.`);
     } catch (err) {
       setStatus(`Error connecting to graph: ${err.message}`);
     }
   }, []);
 
+  // Presets based on active section
+  const activePresets = useMemo(() => {
+    return activeSection === 'demo' ? DEMO_PRESETS : ADSYNTH_PRESETS;
+  }, [activeSection]);
+
   useEffect(() => {
-    loadGraph();
+    loadGraph().then(() => {
+      runPathFind('user-3', 'grp-domain-admins', 'demo');
+    });
   }, [loadGraph]);
 
   // Path finding execution
-  const runPathFind = useCallback(async (customFrom, customTo) => {
+  const runPathFind = useCallback(async (customFrom, customTo, customSection) => {
     const fId = customFrom || fromId;
     const tId = customTo || toId;
+    const section = customSection || activeSection;
     if (!fId || !tId) return;
 
-    setStatus(`Computing Dijkstra-weighted attack paths from '${fId}' to '${tId}'...`);
+    setStatus(`Computing Dijkstra-weighted attack paths from '${fId}' to '${tId}' (${section.toUpperCase()})...`);
     setRemediationState(null);
     setReroutedLinks(new Set());
     setLlmBriefing(null);
 
     try {
-      const result = await getPaths(fId, tId);
+      const result = await getPaths(fId, tId, section);
       setPathResult(result);
       if (result.paths && result.paths.length > 0) {
         const best = result.paths[0];
@@ -138,9 +183,10 @@ export default function GraphView() {
         setActiveTab('paths');
 
         // Center on path
+        const currentNodes = section === 'demo' ? demoGraphData.nodes : adsynthGraphData.nodes;
         if (fgRef.current && best.steps.length > 0) {
-          const firstNode = graphData.nodes.find((n) => n.id === best.steps[0].from);
-          if (firstNode) {
+          const firstNode = currentNodes.find((n) => n.id === best.steps[0].from);
+          if (firstNode && typeof firstNode.x === 'number') {
             fgRef.current.centerAt(firstNode.x, firstNode.y, 800);
             fgRef.current.zoom(2.5, 800);
           }
@@ -153,16 +199,16 @@ export default function GraphView() {
     } catch (err) {
       setStatus(`Path computation failed: ${err.message}`);
     }
-  }, [fromId, toId, graphData.nodes]);
+  }, [fromId, toId, activeSection, demoGraphData.nodes, adsynthGraphData.nodes]);
 
   // Blast radius execution
   const runBlastRadius = useCallback(async (targetNodeId) => {
     const nodeId = targetNodeId || selectedNode?.id || fromId;
     if (!nodeId) return;
 
-    setStatus(`Calculating blast radius for node '${nodeId}'...`);
+    setStatus(`Calculating blast radius for node '${nodeId}' (${activeSection.toUpperCase()})...`);
     try {
-      const data = await getBlastRadius(nodeId);
+      const data = await getBlastRadius(nodeId, activeSection);
       setBlastRadiusData(data);
       const reachableIds = new Set(data.reachable.map((n) => n.id));
       reachableIds.add(nodeId);
@@ -172,7 +218,7 @@ export default function GraphView() {
     } catch (err) {
       setStatus(`Blast radius calculation failed: ${err.message}`);
     }
-  }, [selectedNode, fromId]);
+  }, [selectedNode, fromId, activeSection]);
 
   // Clear blast radius
   const clearBlastRadius = () => {
@@ -183,10 +229,10 @@ export default function GraphView() {
   // Remediation simulation on ANY edge
   const runRemediationOnEdge = useCallback(async (relId, edgeLabel) => {
     if (!fromId || !toId) return;
-    setStatus(`Simulating revocation of edge '${edgeLabel || relId}'...`);
+    setStatus(`Simulating revocation of edge '${edgeLabel || relId}' (${activeSection.toUpperCase()})...`);
 
     try {
-      const result = await simulateRemediation(fromId, toId, relId);
+      const result = await simulateRemediation(fromId, toId, relId, activeSection);
       setRemediationState(result);
 
       if (result.pathEliminated) {
@@ -206,7 +252,7 @@ export default function GraphView() {
     } catch (err) {
       setStatus(`Remediation simulation error: ${err.message}`);
     }
-  }, [fromId, toId]);
+  }, [fromId, toId, activeSection]);
 
   // Live AI Threat Reasoning generation
   const runExplainPath = useCallback(async () => {
@@ -231,18 +277,141 @@ export default function GraphView() {
   const handleInject = async (e) => {
     e.preventDefault();
     if (!injectFrom || !injectTo || !injectType) return;
-    setInjectStatus('Injecting relationship into live graph...');
+    setInjectStatus(`Injecting relationship into ${activeSection.toUpperCase()} graph...`);
 
     try {
-      const res = await injectRelationship(injectFrom, injectTo, injectType);
+      const res = await injectRelationship(injectFrom, injectTo, injectType, activeSection);
       setInjectStatus(`SUCCESS! Added [${res.type}] between '${res.from}' and '${res.to}'.`);
-      // Reload graph and re-run pathfind
+      // Reload graphs and re-run pathfind
       await loadGraph();
-      runPathFind(injectFrom, injectTo);
+      runPathFind(injectFrom, injectTo, activeSection);
       setTimeout(() => setShowInjectModal(false), 1500);
     } catch (err) {
       setInjectStatus(`Injection failed: ${err.message}`);
     }
+  };
+
+  // ADSynth In-Memory Validation & Attack Path Pre-flight
+  const handleAdsynthTest = async () => {
+    setAdsynthLoading(true);
+    setAdsynthStatus('Validating ADSynth dataset in-memory...');
+    try {
+      const res = await testAdsynth(adsynthPath);
+      setAdsynthTestResult(res);
+      setAdsynthStatus(`VALIDATED: ${res.nodesCount} nodes, ${res.relsCount} relationships, ${res.attackPathsCount} attack paths to Tier-0.`);
+    } catch (err) {
+      setAdsynthStatus(`Validation failed: ${err.response?.data?.error || err.message}`);
+    } finally {
+      setAdsynthLoading(false);
+    }
+  };
+
+  // ADSynth Live Import to Neo4j
+  const handleAdsynthImport = async () => {
+    setAdsynthLoading(true);
+    setAdsynthStatus('Importing ADSynth dataset into Neo4j...');
+    try {
+      const res = await importAdsynth(adsynthPath);
+      setAdsynthStatus(`SUCCESS: Imported ${res.nodesCount} nodes and ${res.relsCount} relationships into Neo4j!`);
+      const updatedAdsynth = await getGraph('adsynth');
+      setAdsynthGraphData(updatedAdsynth);
+      setActiveSection('adsynth');
+      setFromId('user-03');
+      setToId('grp-domain-admins');
+      runPathFind('user-03', 'grp-domain-admins', 'adsynth');
+      setTimeout(() => {
+        setShowAdsynthModal(false);
+      }, 1200);
+    } catch (err) {
+      setAdsynthStatus(`Import failed: ${err.response?.data?.error || err.message}`);
+    } finally {
+      setAdsynthLoading(false);
+    }
+  };
+
+  // Reset/reload canonical 129-node demo benchmark in Neo4j
+  const handleLoadDemoBenchmark = async () => {
+    setStatus('Reloading canonical 129-node demo benchmark dataset in Neo4j...');
+    try {
+      await seedDefault();
+      const updatedDemo = await getGraph('demo');
+      setDemoGraphData(updatedDemo);
+      setActiveSection('demo');
+      setFromId('user-3');
+      setToId('grp-domain-admins');
+      runPathFind('user-3', 'grp-domain-admins', 'demo');
+      setStatus('Successfully reloaded 129-node demo benchmark graph.');
+    } catch (err) {
+      setStatus(`Error loading benchmark: ${err.message}`);
+    }
+  };
+
+  // Quick import workspace ADSynth dataset
+  const handleQuickImportAdsynth = async (targetPath = 'data/adsynth') => {
+    setStatus(`Importing ADSynth dataset from ${targetPath}...`);
+    try {
+      const res = await importAdsynth(targetPath);
+      const updatedAdsynth = await getGraph('adsynth');
+      setAdsynthGraphData(updatedAdsynth);
+      setActiveSection('adsynth');
+      setFromId('user-03');
+      setToId('grp-domain-admins');
+      runPathFind('user-03', 'grp-domain-admins', 'adsynth');
+      setStatus(`Successfully loaded ADSynth dataset (${res.nodesCount} nodes, ${res.relsCount} relationships).`);
+    } catch (err) {
+      setStatus(`Error importing ADSynth: ${err.message}`);
+    }
+  };
+
+  // Instant switch to Demo Graph Section
+  const switchToDemoMode = () => {
+    setActiveSection('demo');
+    setFromId('user-3');
+    setToId('grp-domain-admins');
+    setSelectedNode(null);
+    setSelectedLink(null);
+    setRemediationState(null);
+    setHighlightLinks(new Set());
+    setHighlightNodes(new Set());
+    setReroutedLinks(new Set());
+    setBlastNodes(new Set());
+    setBlastRadiusData(null);
+    runPathFind('user-3', 'grp-domain-admins', 'demo');
+    setStatus('Switched to Demo Graph Section (129-Node Benchmark Graph).');
+    if (fgRef.current) {
+      setTimeout(() => {
+        fgRef.current.zoomToFit(500, 40);
+      }, 60);
+    }
+  };
+
+  // Instant switch to Import ADSynth Data Section
+  const switchToAdsynthMode = () => {
+    setActiveSection('adsynth');
+    setFromId('user-03');
+    setToId('grp-domain-admins');
+    setSelectedNode(null);
+    setSelectedLink(null);
+    setRemediationState(null);
+    setHighlightLinks(new Set());
+    setHighlightNodes(new Set());
+    setReroutedLinks(new Set());
+    setBlastNodes(new Set());
+    setBlastRadiusData(null);
+    runPathFind('user-03', 'grp-domain-admins', 'adsynth');
+    setStatus('Switched to Import ADSynth Data Section (88-Node ADSynth Dataset).');
+    if (fgRef.current) {
+      setTimeout(() => {
+        fgRef.current.zoomToFit(500, 40);
+      }, 60);
+    }
+  };
+
+  // Unified preset click handler
+  const handlePresetClick = (p) => {
+    setFromId(p.from);
+    setToId(p.to);
+    runPathFind(p.from, p.to, activeSection);
   };
 
   // Node click handler
@@ -285,42 +454,68 @@ export default function GraphView() {
         zIndex: 10,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <svg style={{ width: 22, height: 22, color: '#ffffff', flexShrink: 0 }} viewBox="0 0 24 24" fill="currentColor">
-            <g transform="rotate(-30 12 12)">
-              <circle cx="7.3" cy="3.2" r="1.45" />
-              <rect x="5.5" y="4.7" width="3.6" height="14.6" rx="1.8" />
-              <rect x="14.9" y="4.7" width="3.6" height="14.6" rx="1.8" />
-              <circle cx="16.7" cy="20.8" r="1.45" />
-            </g>
-          </svg>
+          <img
+            src="/zenith-logo.svg"
+            alt="ZENITH"
+            style={{ width: 24, height: 24, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.25))' }}
+          />
           <div>
-            <div style={{ fontWeight: 700, fontSize: 15, letterSpacing: '-0.02em', color: '#fff' }}>
-              ZENITH<span style={{ fontWeight: 400, opacity: 0.85 }}>.ai</span>
+            <div style={{ fontWeight: 700, fontSize: 15, letterSpacing: '-0.02em', color: '#fff', display: 'flex', alignItems: 'center' }}>
+              ZENITH
               <span style={{ color: '#9a9a9a', fontSize: 10.5, fontWeight: 500, marginLeft: 8, padding: '2px 6px', background: 'rgba(255,255,255,0.08)', borderRadius: 4, border: '1px solid rgba(255,255,255,0.12)' }}>v2.0</span>
-            </div>
-            <div style={{ fontSize: 9.5, color: 'var(--text-dim)', letterSpacing: '0.04em' }}>
-              IDENTITY PRIVILEGE GRAPH & ATTACK PATH ANALYZER
             </div>
           </div>
         </div>
 
-        {/* Demo Quick Presets */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 11, color: 'var(--text-muted)', marginRight: 4, fontWeight: 600 }}>DEMO PRESETS:</span>
-          {PRESETS.map((p, idx) => (
-            <button
-              key={idx}
-              className="btn-subtle"
-              onClick={() => {
-                setFromId(p.from);
-                setToId(p.to);
-                runPathFind(p.from, p.to);
-              }}
-              title={p.desc}
-            >
-              {p.label}
-            </button>
-          ))}
+        {/* Mode Selector: DEMO GRAPH vs IMPORT ADSYNTH DATA */}
+        <div style={{
+          display: 'flex',
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: 8,
+          padding: 3,
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          gap: 4,
+        }}>
+          <button
+            style={{
+              padding: '6px 18px',
+              fontSize: 12,
+              fontWeight: 700,
+              borderRadius: 6,
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              background: activeSection === 'demo'
+                ? 'linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(56, 189, 248, 0.25))'
+                : 'transparent',
+              color: activeSection === 'demo' ? '#ffffff' : 'var(--text-muted)',
+              boxShadow: activeSection === 'demo' ? '0 0 14px rgba(168, 85, 247, 0.4)' : 'none',
+              borderBottom: activeSection === 'demo' ? '2px solid #c084fc' : 'none',
+            }}
+            onClick={switchToDemoMode}
+          >
+            DEMO GRAPH MODE
+          </button>
+          <button
+            style={{
+              padding: '6px 18px',
+              fontSize: 12,
+              fontWeight: 700,
+              borderRadius: 6,
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              background: activeSection === 'adsynth'
+                ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.35), rgba(16, 185, 129, 0.25))'
+                : 'transparent',
+              color: activeSection === 'adsynth' ? '#ffffff' : 'var(--text-muted)',
+              boxShadow: activeSection === 'adsynth' ? '0 0 14px rgba(56, 189, 248, 0.4)' : 'none',
+              borderBottom: activeSection === 'adsynth' ? '2px solid #38bdf8' : 'none',
+            }}
+            onClick={switchToAdsynthMode}
+          >
+            IMPORT ADSYNTH DATA
+          </button>
         </div>
 
         {/* Actions & Stats */}
@@ -343,6 +538,139 @@ export default function GraphView() {
           </a>
         </div>
       </header>
+
+      {/* Contextual Section Sub-Toolbar */}
+      <div style={{
+        height: 44,
+        padding: '0 20px',
+        background: '#09090b',
+        borderBottom: '1px solid var(--border-subtle)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        zIndex: 9,
+      }}>
+        {/* SECTION 1: DEMO GRAPH MODE CONTROLS */}
+        {activeSection === 'demo' && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{
+                fontSize: 10.5,
+                fontWeight: 800,
+                color: '#c084fc',
+                padding: '3px 8px',
+                borderRadius: 4,
+                background: 'rgba(192, 132, 252, 0.12)',
+                border: '1px solid rgba(192, 132, 252, 0.3)',
+                letterSpacing: '0.04em',
+              }}>
+                DEMO BENCHMARK PRESETS
+              </span>
+              {DEMO_PRESETS.map((p, idx) => (
+                <button
+                  key={idx}
+                  className="btn-subtle"
+                  style={{
+                    fontSize: 11,
+                    padding: '4px 10px',
+                    color: fromId === p.from ? '#c084fc' : undefined,
+                    borderColor: fromId === p.from ? '#c084fc' : undefined,
+                  }}
+                  onClick={() => handlePresetClick(p)}
+                  title={p.desc}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                129 Benchmark Nodes
+              </span>
+              <button
+                className="btn-subtle"
+                style={{
+                  fontSize: 11,
+                  padding: '4px 12px',
+                  color: '#c084fc',
+                  borderColor: 'rgba(192, 132, 252, 0.4)',
+                  background: 'rgba(192, 132, 252, 0.08)',
+                }}
+                onClick={handleLoadDemoBenchmark}
+                title="Force reload Neo4j with canonical 129-node benchmark dataset"
+              >
+                Reload Benchmark Graph
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* SECTION 2: IMPORT ADSYNTH DATA CONTROLS */}
+        {activeSection === 'adsynth' && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{
+                fontSize: 10.5,
+                fontWeight: 800,
+                color: 'var(--accent-cyan)',
+                padding: '3px 8px',
+                borderRadius: 4,
+                background: 'rgba(56, 189, 248, 0.12)',
+                border: '1px solid rgba(56, 189, 248, 0.3)',
+                letterSpacing: '0.04em',
+              }}>
+                ADSYNTH ATTACK PATHS
+              </span>
+              {ADSYNTH_PRESETS.map((p, idx) => (
+                <button
+                  key={idx}
+                  className="btn-subtle"
+                  style={{
+                    fontSize: 11,
+                    padding: '4px 10px',
+                    color: fromId === p.from ? 'var(--accent-cyan)' : undefined,
+                    borderColor: fromId === p.from ? 'var(--accent-cyan)' : undefined,
+                  }}
+                  onClick={() => handlePresetClick(p)}
+                  title={p.desc}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                Connected Dataset
+              </span>
+              <button
+                className="btn-subtle"
+                style={{ fontSize: 11, padding: '4px 10px' }}
+                onClick={() => handleQuickImportAdsynth('data/adsynth')}
+                title="Quick-load workspace ADSynth run dataset"
+              >
+                Re-import data/adsynth
+              </button>
+              <button
+                className="btn-primary"
+                style={{
+                  fontSize: 11,
+                  padding: '4px 12px',
+                  background: 'linear-gradient(135deg, #0284c7, #0369a1)',
+                }}
+                onClick={() => {
+                  setShowAdsynthModal(true);
+                  setAdsynthStatus('');
+                  setAdsynthTestResult(null);
+                }}
+              >
+                Import from Directory Path...
+              </button>
+            </div>
+          </>
+        )}
+      </div>
 
       {/* Main Workspace */}
       <div style={{ display: 'flex', flex: 1, position: 'relative', overflow: 'hidden' }}>
@@ -410,6 +738,29 @@ export default function GraphView() {
 
           {/* Query Inputs Card */}
           <div style={{ padding: 16, borderBottom: '1px solid var(--border-subtle)' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 12,
+              padding: '6px 10px',
+              borderRadius: 6,
+              background: activeSection === 'demo' ? 'rgba(192, 132, 252, 0.08)' : 'rgba(56, 189, 248, 0.08)',
+              border: `1px solid ${activeSection === 'demo' ? 'rgba(192, 132, 252, 0.25)' : 'rgba(56, 189, 248, 0.25)'}`,
+            }}>
+              <span style={{
+                fontSize: 10.5,
+                fontWeight: 800,
+                letterSpacing: '0.04em',
+                color: activeSection === 'demo' ? '#c084fc' : 'var(--accent-cyan)',
+              }}>
+                {activeSection === 'demo' ? 'DEMO BENCHMARK GRAPH' : 'ADSYNTH DATASET GRAPH'}
+              </span>
+              <span style={{ fontSize: 10, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                {graphData.nodes.length} Nodes • {graphData.links.length} Edges
+              </span>
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>
@@ -584,7 +935,7 @@ export default function GraphView() {
                         }
                       }}
                     >
-                      ↺ Reset Remediation Simulation
+                      Reset Remediation Simulation
                     </button>
                   </div>
                 )}
@@ -1241,7 +1592,7 @@ export default function GraphView() {
                         letterSpacing: '0.05em',
                         color: '#34d399',
                       }}>
-                        ● AI THREAT ANALYSIS COMPLETE
+                        AI THREAT ANALYSIS COMPLETE
                       </span>
                     </div>
                     <span className="badge" style={{
@@ -1266,7 +1617,7 @@ export default function GraphView() {
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--accent-cyan)', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
                       <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent-cyan)', display: 'inline-block' }} />
-                      ● LIVE AI THREAT INTELLIGENCE
+                      LIVE AI THREAT INTELLIGENCE
                     </div>
                     <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Neo4j Verified Dataset</span>
                   </div>
@@ -1672,6 +2023,166 @@ export default function GraphView() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ADSynth Dataset Directory Ingestion Modal */}
+      {showAdsynthModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.8)',
+          display: 'grid',
+          placeItems: 'center',
+          zIndex: 100,
+          backdropFilter: 'blur(8px)',
+        }}>
+          <div style={{
+            width: 520,
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-active)',
+            borderRadius: 10,
+            padding: 24,
+            boxShadow: '0 16px 48px rgba(0, 0, 0, 0.8)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div style={{ fontWeight: 700, fontSize: 16, color: '#fff' }}>ADSynth Dataset Ingestion</div>
+              <button
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 20, cursor: 'pointer' }}
+                onClick={() => setShowAdsynthModal(false)}
+              >
+                &times;
+              </button>
+            </div>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14, lineHeight: 1.4 }}>
+              Import synthetic enterprise AD &amp; hybrid Entra ID graphs directly from any directory path to test attack path reasoning in Neo4j.
+            </p>
+
+            {/* Quick Preset Buttons */}
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-dim)', marginBottom: 6, letterSpacing: '0.05em' }}>
+                QUICK DIRECTORY PRESETS:
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {[
+                  { label: 'data/adsynth (Workspace)', path: 'data/adsynth' },
+                  { label: 'zenith-graph (329 nodes)', path: '/Users/aalokaage/ADSYNTH/ADSynth/generated_datasets/zenith-graph' },
+                  { label: 'zenith_enterprise_hybrid', path: '/Users/aalokaage/ADSYNTH/ADSynth/generated_datasets/zenith_enterprise_hybrid' },
+                  { label: 'smoke-test', path: '/Users/aalokaage/ADSYNTH/ADSynth/generated_datasets/smoke-test' },
+                ].map((item) => (
+                  <button
+                    key={item.path}
+                    type="button"
+                    className="btn-subtle"
+                    style={{
+                      fontSize: 10,
+                      padding: '4px 8px',
+                      background: adsynthPath === item.path ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                      borderColor: adsynthPath === item.path ? 'var(--accent-cyan)' : 'var(--border-subtle)',
+                      color: adsynthPath === item.path ? 'var(--accent-cyan)' : 'var(--text-muted)',
+                    }}
+                    onClick={() => {
+                      setAdsynthPath(item.path);
+                      setAdsynthStatus('');
+                      setAdsynthTestResult(null);
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>
+                DATASET DIRECTORY OR FILE PATH
+              </label>
+              <input
+                value={adsynthPath}
+                onChange={(e) => setAdsynthPath(e.target.value)}
+                placeholder="e.g. data/adsynth or /path/to/generated_datasets/folder"
+                style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: 12 }}
+                disabled={adsynthLoading}
+              />
+            </div>
+
+            {/* Test results preview */}
+            {adsynthTestResult && (
+              <div style={{
+                padding: 12,
+                borderRadius: 6,
+                background: 'rgba(56, 189, 248, 0.08)',
+                border: '1px solid rgba(56, 189, 248, 0.25)',
+                marginBottom: 14,
+                fontSize: 11,
+              }}>
+                <div style={{ fontWeight: 700, color: 'var(--accent-cyan)', marginBottom: 4 }}>
+                  PRE-FLIGHT TOPOLOGY VALIDATED
+                </div>
+                <div style={{ color: '#e2e8f0' }}>
+                  • Nodes: <strong>{adsynthTestResult.nodesCount}</strong> | Relationships: <strong>{adsynthTestResult.relsCount}</strong>
+                </div>
+                <div style={{ color: '#e2e8f0', marginTop: 2 }}>
+                  • Discovered Attack Paths to Tier-0: <strong>{adsynthTestResult.attackPathsCount}</strong>
+                </div>
+              </div>
+            )}
+
+            {/* Status Message */}
+            {adsynthStatus && (
+              <div style={{
+                fontSize: 11,
+                padding: '8px 12px',
+                borderRadius: 4,
+                marginBottom: 14,
+                background: adsynthStatus.startsWith('SUCCESS') || adsynthStatus.startsWith('VALIDATED')
+                  ? 'rgba(16, 185, 129, 0.15)'
+                  : adsynthStatus.startsWith('Test Error') || adsynthStatus.startsWith('Import failed')
+                  ? 'rgba(239, 68, 68, 0.15)'
+                  : 'rgba(255, 255, 255, 0.05)',
+                color: adsynthStatus.startsWith('SUCCESS') || adsynthStatus.startsWith('VALIDATED')
+                  ? '#34d399'
+                  : adsynthStatus.startsWith('Test Error') || adsynthStatus.startsWith('Import failed')
+                  ? '#f87171'
+                  : 'var(--accent-cyan)',
+                border: `1px solid ${adsynthStatus.startsWith('SUCCESS') || adsynthStatus.startsWith('VALIDATED') ? 'rgba(16, 185, 129, 0.3)' : 'var(--border-subtle)'}`,
+                fontFamily: 'var(--font-mono)',
+              }}>
+                {adsynthStatus}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'space-between', alignItems: 'center' }}>
+              <button
+                type="button"
+                className="btn-subtle"
+                onClick={() => setShowAdsynthModal(false)}
+                disabled={adsynthLoading}
+              >
+                Close
+              </button>
+
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  type="button"
+                  className="btn-subtle"
+                  style={{ borderColor: 'var(--accent-cyan)', color: 'var(--accent-cyan)' }}
+                  onClick={handleAdsynthTest}
+                  disabled={adsynthLoading || !adsynthPath}
+                >
+                  {adsynthLoading ? 'Analyzing...' : 'Test In-Memory'}
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={handleAdsynthImport}
+                  disabled={adsynthLoading || !adsynthPath}
+                >
+                  {adsynthLoading ? 'Importing...' : 'Import to Neo4j'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

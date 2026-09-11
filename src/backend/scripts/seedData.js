@@ -21,13 +21,15 @@ function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-async function seed() {
+async function seed(shouldCloseDriver = false) {
   await verifyConnection();
   const session = driver.session();
 
   try {
-    console.log('Clearing existing graph...');
-    await session.run('MATCH (n) DETACH DELETE n');
+    console.log('Clearing existing demo graph...');
+    await session.run("MATCH (n {dataset: 'demo'}) DETACH DELETE n");
+    await session.run("MATCH (n) WHERE n.dataset IS NULL AND (n.id STARTS WITH 'user-' AND NOT n.id STARTS WITH 'user-0') DETACH DELETE n");
+    await session.run("MATCH (n) WHERE n.dataset IS NULL AND (n.id STARTS WITH 'machine-' OR n.id STARTS WITH 'svc-' OR n.id STARTS WITH 'grp-') DETACH DELETE n");
 
     const nodes = [];
 
@@ -92,7 +94,7 @@ async function seed() {
 
     for (const [type, group] of Object.entries(byType)) {
       await session.run(
-        `UNWIND $nodes AS n CREATE (x:${type} {id: n.id, name: n.name, critical: n.critical})`,
+        `UNWIND $nodes AS n CREATE (x:${type} {id: n.id, name: n.name, critical: n.critical, dataset: 'demo'})`,
         { nodes: group }
       );
     }
@@ -188,8 +190,8 @@ async function seed() {
       if (!batch.length) continue;
       await session.run(
         `UNWIND $edges AS e
-         MATCH (a {id: e.from}), (b {id: e.to})
-         CREATE (a)-[r:${type} {weight: $weight}]->(b)`,
+         MATCH (a {id: e.from, dataset: 'demo'}), (b {id: e.to, dataset: 'demo'})
+         CREATE (a)-[r:${type} {weight: $weight, dataset: 'demo'}]->(b)`,
         { edges: batch, weight }
       );
     }
@@ -200,13 +202,24 @@ async function seed() {
     console.log(`[Planted Path 2] ${plantedUser2} -> ${plantedMachine2a} -> ${plantedMachine2b} -> ${plantedSvc2} -> grp-domain-admins`);
     console.log(`[Planted Path 3] ${plantedUser3} -> gpo-workstation-policy -> machine-12 -> svc-8 -> grp-domain-admins`);
     console.log(`[Planted Path 4] ${plantedUser4} -> svc-4 (Kerberoasting) -> machine-0 (DC) -> grp-domain-admins`);
+    return {
+      success: true,
+      nodesCount: nodes.length,
+      edgesCount: edges.length,
+    };
   } finally {
     await session.close();
-    await closeDriver();
+    if (shouldCloseDriver) {
+      await closeDriver();
+    }
   }
 }
 
-seed().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (require.main === module) {
+  seed(true).catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
+
+module.exports = { seed };

@@ -6,15 +6,48 @@ const WEIGHT_BY_LABEL = Object.fromEntries(
   Object.values(RELATIONSHIP_TYPES).map((r) => [r.label, r.weight])
 );
 
-/** Fetch the whole graph (used to render the frontend visualization). */
-async function getFullGraph() {
+function resolveDataset(explicitDataset, ...nodeIds) {
+  if (explicitDataset === 'demo' || explicitDataset === 'adsynth') {
+    return explicitDataset;
+  }
+  for (const id of nodeIds) {
+    if (!id || typeof id !== 'string') continue;
+    if (
+      id.startsWith('user-0') ||
+      id.startsWith('srv-') ||
+      id.startsWith('wkstn-') ||
+      id.startsWith('dc-') ||
+      id.startsWith('sync-') ||
+      id.startsWith('tenant-') ||
+      id.startsWith('domain-') ||
+      id.startsWith('spn-') ||
+      id.startsWith('mi-')
+    ) {
+      return 'adsynth';
+    }
+  }
+  return 'demo';
+}
+
+/** Fetch graph nodes & edges scoped by dataset (demo or adsynth). */
+async function getFullGraph(requestedDataset) {
   const session = driver.session();
   try {
-    const result = await session.run(
-      `MATCH (n)
-       OPTIONAL MATCH (n)-[r]->(m)
-       RETURN n, r, m`
-    );
+    let result;
+    if (requestedDataset === 'demo' || requestedDataset === 'adsynth') {
+      result = await session.run(
+        `MATCH (n {dataset: $dataset})
+         OPTIONAL MATCH (n)-[r {dataset: $dataset}]->(m {dataset: $dataset})
+         RETURN n, r, m`,
+        { dataset: requestedDataset }
+      );
+    } else {
+      result = await session.run(
+        `MATCH (n)
+         OPTIONAL MATCH (n)-[r]->(m)
+         RETURN n, r, m`
+      );
+    }
 
     const nodesById = new Map();
     const links = [];
@@ -30,6 +63,8 @@ async function getFullGraph() {
           name: n.properties.name,
           type: n.labels[0],
           critical: !!n.properties.critical,
+          tier: n.properties.tier,
+          dataset: n.properties.dataset,
         });
       }
       if (m && !nodesById.has(m.properties.id)) {
@@ -38,6 +73,8 @@ async function getFullGraph() {
           name: m.properties.name,
           type: m.labels[0],
           critical: !!m.properties.critical,
+          tier: m.properties.tier,
+          dataset: m.properties.dataset,
         });
       }
       if (r) {
@@ -47,6 +84,8 @@ async function getFullGraph() {
           target: m.properties.id,
           type: r.type,
           weight: r.properties.weight,
+          friction: r.properties.friction,
+          dataset: r.properties.dataset,
         });
       }
     }
@@ -59,20 +98,35 @@ async function getFullGraph() {
 
 /**
  * Find attack paths between two nodes, up to maxHops, ranked by exploit
- * cost (sum of edge weights - lower = easier real-world attack path).
+ * cost within the active dataset.
  */
-async function findAttackPaths(fromId, toId, maxHops = 6, limit = 5) {
+async function findAttackPaths(fromId, toId, maxHops = 6, limit = 5, explicitDataset = null) {
+  const dataset = resolveDataset(explicitDataset, fromId, toId);
   const session = driver.session();
   try {
-    const result = await session.run(
-      `MATCH (start {id: $fromId}), (end {id: $toId})
+    let result = await session.run(
+      `MATCH (start {id: $fromId, dataset: $dataset}), (end {id: $toId, dataset: $dataset})
        MATCH p = (start)-[*1..${maxHops}]->(end)
+       WHERE ALL(r IN relationships(p) WHERE r.dataset = $dataset)
        WITH p, end, reduce(cost = 0, r IN relationships(p) | cost + r.weight) AS totalCost
        RETURN p, totalCost, end.critical AS isCritical
        ORDER BY totalCost ASC
        LIMIT $limit`,
-      { fromId, toId, limit: neo4j.int(limit) }
+      { fromId, toId, dataset, limit: neo4j.int(limit) }
     );
+
+    // Backward-compatible fallback for untagged legacy nodes
+    if (result.records.length === 0) {
+      result = await session.run(
+        `MATCH (start {id: $fromId}), (end {id: $toId})
+         MATCH p = (start)-[*1..${maxHops}]->(end)
+         WITH p, end, reduce(cost = 0, r IN relationships(p) | cost + r.weight) AS totalCost
+         RETURN p, totalCost, end.critical AS isCritical
+         ORDER BY totalCost ASC
+         LIMIT $limit`,
+        { fromId, toId, limit: neo4j.int(limit) }
+      );
+    }
 
     return result.records.map((record) => {
       const path = record.get('p');
@@ -136,17 +190,30 @@ function scoreFromCost(totalCost, hops, isCritical = true) {
   return Math.max(5, Math.min(100, Math.round(raw)));
 }
 
-/** All nodes reachable from a starting node - "if this is compromised, what's exposed". */
-async function getBlastRadius(nodeId, maxHops = 6) {
+/** All nodes reachable from a starting node within the active dataset. */
+async function getBlastRadius(nodeId, maxHops = 6, explicitDataset = null) {
+  const dataset = resolveDataset(explicitDataset, nodeId);
   const session = driver.session();
   try {
-    const result = await session.run(
-      `MATCH (start {id: $nodeId})
+    let result = await session.run(
+      `MATCH (start {id: $nodeId, dataset: $dataset})
        MATCH (start)-[*1..${maxHops}]->(reachable)
+       WHERE reachable.dataset = $dataset
        RETURN DISTINCT reachable.id AS id, reachable.name AS name,
               labels(reachable)[0] AS type, reachable.critical AS critical`,
-      { nodeId }
+      { nodeId, dataset }
     );
+
+    if (result.records.length === 0) {
+      result = await session.run(
+        `MATCH (start {id: $nodeId})
+         MATCH (start)-[*1..${maxHops}]->(reachable)
+         RETURN DISTINCT reachable.id AS id, reachable.name AS name,
+                labels(reachable)[0] AS type, reachable.critical AS critical`,
+        { nodeId }
+      );
+    }
+
     return result.records.map((r) => ({
       id: r.get('id'),
       name: r.get('name'),
@@ -161,22 +228,41 @@ async function getBlastRadius(nodeId, maxHops = 6) {
 /**
  * Remediation simulation: re-run path-finding while excluding one
  * relationship, returning whether the path is eliminated OR the new alternate
- * re-routed path if one still exists.
+ * re-routed path within the active dataset.
  */
-async function simulateRemediation(fromId, toId, excludeRelId, maxHops = 6) {
+async function simulateRemediation(fromId, toId, excludeRelId, maxHops = 6, explicitDataset = null) {
+  const dataset = resolveDataset(explicitDataset, fromId, toId);
   const session = driver.session();
   try {
-    const result = await session.run(
-      `MATCH (start {id: $fromId}), (end {id: $toId})
+    let result = await session.run(
+      `MATCH (start {id: $fromId, dataset: $dataset}), (end {id: $toId, dataset: $dataset})
        MATCH p = (start)-[*1..${maxHops}]->(end)
-       WHERE NOT $excludeRelId IN [r IN relationships(p) | elementId(r)]
+       WHERE ALL(r IN relationships(p) WHERE r.dataset = $dataset)
+         AND NOT $excludeRelId IN [r IN relationships(p) | elementId(r)]
          AND NOT $excludeRelId IN [r IN relationships(p) | toString(id(r))]
        WITH p, end, reduce(cost = 0, r IN relationships(p) | cost + r.weight) AS totalCost
        RETURN p, totalCost, end.critical AS isCritical
        ORDER BY totalCost ASC
        LIMIT 1`,
-      { fromId, toId, excludeRelId: String(excludeRelId) }
+      { fromId, toId, dataset, excludeRelId: String(excludeRelId) }
     );
+
+    if (result.records.length === 0) {
+      const checkPath = await session.run(
+        `MATCH (start {id: $fromId}), (end {id: $toId})
+         MATCH p = (start)-[*1..${maxHops}]->(end)
+         WHERE NOT $excludeRelId IN [r IN relationships(p) | elementId(r)]
+           AND NOT $excludeRelId IN [r IN relationships(p) | toString(id(r))]
+         WITH p, end, reduce(cost = 0, r IN relationships(p) | cost + r.weight) AS totalCost
+         RETURN p, totalCost, end.critical AS isCritical
+         ORDER BY totalCost ASC
+         LIMIT 1`,
+        { fromId, toId, excludeRelId: String(excludeRelId) }
+      );
+      if (checkPath.records.length > 0) {
+        result = checkPath;
+      }
+    }
 
     if (result.records.length === 0) {
       return {
@@ -244,7 +330,8 @@ async function simulateRemediation(fromId, toId, excludeRelId, maxHops = 6) {
  * Live scenario injection for judges:
  * Add a new privilege relationship directly into the live graph.
  */
-async function injectRelationship(fromId, toId, relationshipType) {
+async function injectRelationship(fromId, toId, relationshipType, explicitDataset = null) {
+  const dataset = resolveDataset(explicitDataset, fromId, toId);
   const relConfig = RELATIONSHIP_TYPES[relationshipType] ||
     Object.values(RELATIONSHIP_TYPES).find((r) => r.label === relationshipType) ||
     { label: relationshipType, weight: 3 };
@@ -254,12 +341,21 @@ async function injectRelationship(fromId, toId, relationshipType) {
 
   const session = driver.session();
   try {
-    const result = await session.run(
-      `MATCH (a {id: $fromId}), (b {id: $toId})
-       CREATE (a)-[r:${label} {weight: $weight}]->(b)
+    let result = await session.run(
+      `MATCH (a {id: $fromId, dataset: $dataset}), (b {id: $toId, dataset: $dataset})
+       CREATE (a)-[r:${label} {weight: $weight, dataset: $dataset}]->(b)
        RETURN elementId(r) AS relId, type(r) AS type, r.weight AS weight`,
-      { fromId, toId, weight }
+      { fromId, toId, dataset, weight }
     );
+
+    if (result.records.length === 0) {
+      result = await session.run(
+        `MATCH (a {id: $fromId}), (b {id: $toId})
+         CREATE (a)-[r:${label} {weight: $weight}]->(b)
+         RETURN elementId(r) AS relId, type(r) AS type, r.weight AS weight`,
+        { fromId, toId, weight }
+      );
+    }
 
     if (result.records.length === 0) {
       throw new Error(`One or both nodes (${fromId}, ${toId}) do not exist in the graph.`);
@@ -286,3 +382,4 @@ module.exports = {
   simulateRemediation,
   injectRelationship,
 };
+

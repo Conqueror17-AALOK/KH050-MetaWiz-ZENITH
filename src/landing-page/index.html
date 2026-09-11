@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ZENITH.ai — Identity Privilege Graph & Attack Path Analyzer</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cg transform='rotate(-30 12 12)'%3E%3Ccircle cx='7.3' cy='3.2' r='1.45'/%3E%3Crect x='5.5' y='4.7' width='3.6' height='14.6' rx='1.8'/%3E%3Crect x='14.9' y='4.7' width='3.6' height='14.6' rx='1.8'/%3E%3Ccircle cx='16.7' cy='20.8' r='1.45'/%3E%3C/g%3E%3C/svg%3E" />
+<title>ZENITH</title>
+<link rel="icon" type="image/svg+xml" href="zenith-logo.svg" />
 
 <!-- Google Fonts fallback (Inter variable roman + Instrument Serif italic) -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -38,8 +38,8 @@ html, body { background: #000000 !important; color: #ffffff; }
   --border: rgba(255, 255, 255, 0.16);
   --border-soft: rgba(255, 255, 255, 0.12);
 
-  --logo: 15.5px;
-  --logo-mark: 22px;
+  --logo: 20px;
+  --logo-mark: 30px;
   --nav: 13.5px;
   --nav-h: 40px;
   --btn: 13.5px;
@@ -157,19 +157,22 @@ header.header {
 .logo {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
+  gap: 12px;
   justify-self: start;
   font-size: var(--logo);
-  font-weight: 600;
-  letter-spacing: -0.03em;
+  font-weight: 750;
+  letter-spacing: -0.025em;
   color: #ffffff;
+  text-decoration: none;
   cursor: pointer;
 }
 
 .logo-mark {
   width: var(--logo-mark);
   height: var(--logo-mark);
-  color: #ffffff;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.25));
 }
 
 .logo-suffix {
@@ -753,8 +756,8 @@ body.menu-open .burger-bar:nth-child(3) {
 /* Responsive */
 @media (min-width: 1600px) {
   :root {
-    --logo: 17px;
-    --logo-mark: 24px;
+    --logo: 22px;
+    --logo-mark: 34px;
     --nav: 14.5px;
     --nav-h: 44px;
     --btn: 15px;
@@ -780,8 +783,8 @@ body.menu-open .burger-bar:nth-child(3) {
 
 @media (min-width: 1920px) {
   :root {
-    --logo: 18px;
-    --logo-mark: 26px;
+    --logo: 24px;
+    --logo-mark: 38px;
     --nav: 15.5px;
     --nav-h: 48px;
     --btn: 16px;
@@ -805,7 +808,8 @@ body.menu-open .burger-bar:nth-child(3) {
 
 @media (min-width: 901px) and (max-width: 1279px) {
   :root {
-    --logo: 15px;
+    --logo: 19px;
+    --logo-mark: 28px;
     --nav: 12.5px;
     --nav-h: 36px;
     --btn: 13px;
@@ -952,7 +956,8 @@ body.menu-open .burger-bar:nth-child(3) {
     text-align: center;
   }
   :root {
-    --logo: 16px;
+    --logo: 18.5px;
+    --logo-mark: 28px;
     --btn: 15px;
     --btn-h: 46px;
     --hero-btn-h: 48px;
@@ -1002,16 +1007,14 @@ body.menu-open .burger-bar:nth-child(3) {
 
   <!-- Header -->
   <header class="header">
-    <a href="#top" class="logo appear appear--scale" style="--d: 0.08s" aria-label="ZENITH.ai">
-      <svg class="logo-mark" viewBox="0 0 24 24" fill="currentColor">
-        <g transform="rotate(-30 12 12)">
-          <circle cx="7.3" cy="3.2" r="1.45" />
-          <rect x="5.5" y="4.7" width="3.6" height="14.6" rx="1.8" />
-          <rect x="14.9" y="4.7" width="3.6" height="14.6" rx="1.8" />
-          <circle cx="16.7" cy="20.8" r="1.45" />
-        </g>
-      </svg>
-      <span>ZENITH<span class="logo-suffix">.ai</span></span>
+    <a href="#top" class="logo appear appear--scale" style="--d: 0.08s" aria-label="ZENITH">
+      <img
+        src="zenith-logo.svg"
+        alt="ZENITH"
+        class="logo-mark"
+        onerror="if (!this.dataset.retried) { this.dataset.retried=1; this.src='/zenith-logo.svg'; }"
+      />
+      <span>ZENITH</span>
     </a>
 
     <!-- Interactive Project Navigation -->
@@ -1030,7 +1033,7 @@ body.menu-open .burger-bar:nth-child(3) {
       </button>
     </nav>
 
-    <a href="/" class="btn btn-solid header-cta appear appear--scale" style="--d: 0.34s">
+    <a href="/?console=true" class="btn btn-solid header-cta appear appear--scale" style="--d: 0.34s">
       Launch Console
     </a>
 
@@ -1073,7 +1076,7 @@ body.menu-open .burger-bar:nth-child(3) {
 
       <!-- Actions -->
       <div class="hero-actions">
-        <a href="/" class="btn btn-solid appear appear--btn" style="--d: 0.96s">
+        <a href="/?console=true" class="btn btn-solid appear appear--btn" style="--d: 0.96s">
           Launch Graph Console
         </a>
         <button class="btn btn-hero-ghost appear appear--side" style="--d: 1.10s" id="hero-open-calc">
@@ -1189,7 +1192,7 @@ body.menu-open .burger-bar:nth-child(3) {
           HIGH RISK
         </span>
         <div style="margin-top: 8px;">
-          <a href="/" class="btn btn-solid" style="padding: 6px 14px; font-size: 12px;">
+          <a href="/?console=true" class="btn btn-solid" style="padding: 6px 14px; font-size: 12px;">
             Open Console &rarr;
           </a>
         </div>
@@ -1278,7 +1281,7 @@ body.menu-open .burger-bar:nth-child(3) {
     </div>
 
     <div style="text-align: right;">
-      <a href="/" class="btn btn-solid">
+      <a href="/?console=true" class="btn btn-solid">
         Inspect Full Blast Graph in Console &rarr;
       </a>
     </div>
@@ -1314,7 +1317,7 @@ body.menu-open .burger-bar:nth-child(3) {
     </div>
 
     <div style="text-align: right;">
-      <a href="/" class="btn btn-solid">
+      <a href="/?console=true" class="btn btn-solid">
         Run Live AI Explanations in Console &rarr;
       </a>
     </div>

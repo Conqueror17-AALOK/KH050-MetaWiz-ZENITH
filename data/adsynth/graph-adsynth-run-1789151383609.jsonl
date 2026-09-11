@@ -1,0 +1,174 @@
+{"type": "node", "id": "domain-corp-local", "labels": ["ADDomain", "Domain"], "properties": {"name": "CORP.LOCAL", "domain": "CORP.LOCAL", "tier": "Tier-0", "critical": true, "objectid": "S-1-5-21-1001"}}
+{"type": "node", "id": "tenant-corp-azure", "labels": ["Tenant"], "properties": {"name": "corp.onmicrosoft.com", "tenant": "corp.onmicrosoft.com", "tier": "Tier-0", "critical": true, "tenantGuid": "72f988bf-86f1-41af-91ab-2d7cd011db47"}}
+{"type": "node", "id": "grp-domain-admins", "labels": ["Group"], "properties": {"name": "Domain Admins", "domain": "CORP.LOCAL", "tier": "Tier-0", "critical": true, "highvalue": true, "objectid": "S-1-5-21-1001-512"}}
+{"type": "node", "id": "role-global-admin", "labels": ["AzureADRole", "Role"], "properties": {"name": "Global Administrator", "tenant": "corp.onmicrosoft.com", "tier": "Tier-0", "critical": true, "highvalue": true, "roleId": "62e90394-69f5-4237-9190-012177145e10"}}
+{"type": "node", "id": "dc-01-corp-local", "labels": ["Server", "Computer", "Machine"], "properties": {"name": "DC-01.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-0", "critical": true, "highvalue": true, "isDC": true}}
+{"type": "node", "id": "dc-02-corp-local", "labels": ["Server", "Computer", "Machine"], "properties": {"name": "DC-02.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-0", "critical": true, "highvalue": true, "isDC": true}}
+{"type": "node", "id": "srv-entra-connect", "labels": ["Server", "Computer", "Machine"], "properties": {"name": "SRV-EntraSync.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-1", "critical": false, "role": "EntraConnectSync"}}
+{"type": "node", "id": "srv-app-sql", "labels": ["Server", "Computer", "Machine"], "properties": {"name": "SRV-SQL01.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-1", "critical": false}}
+{"type": "node", "id": "srv-backup", "labels": ["Server", "Computer", "Machine"], "properties": {"name": "SRV-Backup01.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-1", "critical": false}}
+{"type": "node", "id": "sync-adfs-worker", "labels": ["SyncIdentity", "ServicePrincipal"], "properties": {"name": "MSOL_EntraSync_Agent", "domain": "CORP.LOCAL", "tier": "Tier-0", "critical": true, "isNHI": true}}
+{"type": "node", "id": "spn-cloud-automation", "labels": ["ServicePrincipal"], "properties": {"name": "spn-devops-deployment", "tenant": "corp.onmicrosoft.com", "tier": "Tier-1", "critical": false, "isNHI": true}}
+{"type": "node", "id": "mi-cluster-operator", "labels": ["ManagedIdentity"], "properties": {"name": "id-aks-node-operator", "tenant": "corp.onmicrosoft.com", "tier": "Tier-1", "critical": false, "isNHI": true}}
+{"type": "node", "id": "svc-entra-admin", "labels": ["ServiceAccount"], "properties": {"name": "svc-entra-admin@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-0", "critical": true}}
+{"type": "node", "id": "svc-sql-cluster", "labels": ["ServiceAccount"], "properties": {"name": "svc-sql-cluster@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-1", "critical": false}}
+{"type": "node", "id": "svc-backup-exec", "labels": ["ServiceAccount"], "properties": {"name": "svc-backup-exec@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-1", "critical": false}}
+{"type": "node", "id": "svc-scanner-nessus", "labels": ["ServiceAccount"], "properties": {"name": "svc-scanner@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-1", "critical": false}}
+{"type": "node", "id": "grp-it-operations", "labels": ["Group"], "properties": {"name": "IT-Operations-Tier1", "domain": "CORP.LOCAL", "tier": "Tier-1", "critical": false}}
+{"type": "node", "id": "grp-helpdesk", "labels": ["Group"], "properties": {"name": "HelpDesk-Support", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "grp-cloud-engineers", "labels": ["Group"], "properties": {"name": "Cloud-DevOps-Engineers", "domain": "CORP.LOCAL", "tier": "Tier-1", "critical": false}}
+{"type": "node", "id": "grp-finance", "labels": ["Group"], "properties": {"name": "Finance-Department", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "grp-security-audit", "labels": ["Group"], "properties": {"name": "Security-Audit-Read", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "grp-workstation-admins", "labels": ["Group"], "properties": {"name": "Workstation-Local-Admins", "domain": "CORP.LOCAL", "tier": "Tier-1", "critical": false}}
+{"type": "node", "id": "wkstn-01", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-01.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-02", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-02.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-03", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-03.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-04", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-04.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-05", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-05.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-06", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-06.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-07", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-07.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-08", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-08.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-09", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-09.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-10", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-10.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-11", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-11.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-12", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-12.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-13", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-13.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-14", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-14.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-15", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-15.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-16", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-16.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-17", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-17.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-18", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-18.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-19", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-19.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-20", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-20.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-21", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-21.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-22", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-22.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-23", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-23.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-24", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-24.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "wkstn-25", "labels": ["Computer", "Machine"], "properties": {"name": "WKSTN-25.corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-01", "labels": ["User"], "properties": {"name": "user01@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-02", "labels": ["User"], "properties": {"name": "user02@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-03", "labels": ["User"], "properties": {"name": "user03@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-04", "labels": ["User"], "properties": {"name": "user04@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-05", "labels": ["User"], "properties": {"name": "user05@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-06", "labels": ["User"], "properties": {"name": "user06@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-07", "labels": ["User"], "properties": {"name": "user07@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-08", "labels": ["User"], "properties": {"name": "user08@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-09", "labels": ["User"], "properties": {"name": "user09@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-10", "labels": ["User"], "properties": {"name": "user10@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-11", "labels": ["User"], "properties": {"name": "user11@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-12", "labels": ["User"], "properties": {"name": "user12@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-13", "labels": ["User"], "properties": {"name": "user13@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-14", "labels": ["User"], "properties": {"name": "user14@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-15", "labels": ["User"], "properties": {"name": "user15@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-16", "labels": ["User"], "properties": {"name": "user16@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-17", "labels": ["User"], "properties": {"name": "user17@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-18", "labels": ["User"], "properties": {"name": "user18@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-19", "labels": ["User"], "properties": {"name": "user19@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-20", "labels": ["User"], "properties": {"name": "user20@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-21", "labels": ["User"], "properties": {"name": "user21@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-22", "labels": ["User"], "properties": {"name": "user22@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-23", "labels": ["User"], "properties": {"name": "user23@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-24", "labels": ["User"], "properties": {"name": "user24@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-25", "labels": ["User"], "properties": {"name": "user25@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-26", "labels": ["User"], "properties": {"name": "user26@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-27", "labels": ["User"], "properties": {"name": "user27@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-28", "labels": ["User"], "properties": {"name": "user28@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-29", "labels": ["User"], "properties": {"name": "user29@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-30", "labels": ["User"], "properties": {"name": "user30@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-31", "labels": ["User"], "properties": {"name": "user31@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-32", "labels": ["User"], "properties": {"name": "user32@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-33", "labels": ["User"], "properties": {"name": "user33@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-34", "labels": ["User"], "properties": {"name": "user34@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-35", "labels": ["User"], "properties": {"name": "user35@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-36", "labels": ["User"], "properties": {"name": "user36@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-37", "labels": ["User"], "properties": {"name": "user37@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-38", "labels": ["User"], "properties": {"name": "user38@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-39", "labels": ["User"], "properties": {"name": "user39@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "user-40", "labels": ["User"], "properties": {"name": "user40@corp.local", "domain": "CORP.LOCAL", "tier": "Tier-2", "critical": false}}
+{"type": "node", "id": "gpo-tier2-hardening", "labels": ["GPO"], "properties": {"name": "GPO-Workstation-Baseline", "domain": "CORP.LOCAL", "critical": false}}
+{"type": "relationship", "start": "user-03", "end": "grp-helpdesk", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "grp-helpdesk", "end": "srv-entra-connect", "relType": "CAN_RDP", "properties": {"port": 3389, "friction": 3}}
+{"type": "relationship", "start": "srv-entra-connect", "end": "sync-adfs-worker", "relType": "HAS_SESSION", "properties": {"memory": "LSASS", "friction": 2}}
+{"type": "relationship", "start": "sync-adfs-worker", "end": "role-global-admin", "relType": "SYNCED_TO", "properties": {"seam": "ADSync", "friction": 2}}
+{"type": "relationship", "start": "role-global-admin", "end": "grp-domain-admins", "relType": "ADMIN_TO", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-07", "end": "wkstn-04", "relType": "CAN_RDP", "properties": {"friction": 3}}
+{"type": "relationship", "start": "wkstn-04", "end": "svc-backup-exec", "relType": "HAS_SESSION", "properties": {"friction": 2}}
+{"type": "relationship", "start": "svc-backup-exec", "end": "dc-01-corp-local", "relType": "ADMIN_TO", "properties": {"friction": 2}}
+{"type": "relationship", "start": "dc-01-corp-local", "end": "grp-domain-admins", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-12", "end": "svc-sql-cluster", "relType": "KERBEROASTABLE", "properties": {"spn": "MSSQLSvc/SRV-SQL01", "friction": 2}}
+{"type": "relationship", "start": "svc-sql-cluster", "end": "grp-workstation-admins", "relType": "GENERIC_ALL", "properties": {"dacl": "FullControl", "friction": 1}}
+{"type": "relationship", "start": "grp-workstation-admins", "end": "grp-domain-admins", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-18", "end": "gpo-tier2-hardening", "relType": "GENERIC_ALL", "properties": {"friction": 1}}
+{"type": "relationship", "start": "gpo-tier2-hardening", "end": "wkstn-08", "relType": "GPO_APPLIED_TO", "properties": {"friction": 3}}
+{"type": "relationship", "start": "wkstn-08", "end": "svc-entra-admin", "relType": "HAS_SESSION", "properties": {"friction": 2}}
+{"type": "relationship", "start": "svc-entra-admin", "end": "grp-domain-admins", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-01", "end": "grp-security-audit", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-01", "end": "wkstn-08", "relType": "CAN_RDP", "properties": {"friction": 3}}
+{"type": "relationship", "start": "user-02", "end": "grp-finance", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-03", "end": "grp-cloud-engineers", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-04", "end": "grp-security-audit", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-04", "end": "wkstn-09", "relType": "CAN_RDP", "properties": {"friction": 3}}
+{"type": "relationship", "start": "user-05", "end": "grp-it-operations", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "wkstn-02", "end": "user-05", "relType": "HAS_SESSION", "properties": {"friction": 2}}
+{"type": "relationship", "start": "user-06", "end": "grp-cloud-engineers", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-07", "end": "grp-finance", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-08", "end": "grp-security-audit", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-09", "end": "grp-helpdesk", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-09", "end": "grp-security-audit", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-09", "end": "wkstn-05", "relType": "CAN_RDP", "properties": {"friction": 3}}
+{"type": "relationship", "start": "user-10", "end": "grp-finance", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-10", "end": "wkstn-22", "relType": "CAN_RDP", "properties": {"friction": 3}}
+{"type": "relationship", "start": "user-11", "end": "grp-security-audit", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-11", "end": "wkstn-15", "relType": "CAN_RDP", "properties": {"friction": 3}}
+{"type": "relationship", "start": "user-12", "end": "grp-it-operations", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-13", "end": "grp-helpdesk", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-14", "end": "grp-cloud-engineers", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-15", "end": "grp-finance", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "wkstn-09", "end": "user-15", "relType": "HAS_SESSION", "properties": {"friction": 2}}
+{"type": "relationship", "start": "user-16", "end": "grp-helpdesk", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-16", "end": "grp-cloud-engineers", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-17", "end": "grp-security-audit", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-17", "end": "grp-security-audit", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-17", "end": "wkstn-08", "relType": "CAN_RDP", "properties": {"friction": 3}}
+{"type": "relationship", "start": "user-18", "end": "grp-cloud-engineers", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-19", "end": "grp-workstation-admins", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-20", "end": "grp-finance", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-20", "end": "grp-workstation-admins", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-20", "end": "wkstn-14", "relType": "CAN_RDP", "properties": {"friction": 3}}
+{"type": "relationship", "start": "user-21", "end": "grp-helpdesk", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-22", "end": "grp-cloud-engineers", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-22", "end": "grp-workstation-admins", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-23", "end": "grp-security-audit", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-23", "end": "wkstn-04", "relType": "CAN_RDP", "properties": {"friction": 3}}
+{"type": "relationship", "start": "user-24", "end": "grp-it-operations", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-25", "end": "grp-cloud-engineers", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-26", "end": "grp-finance", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-27", "end": "grp-finance", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-27", "end": "wkstn-15", "relType": "CAN_RDP", "properties": {"friction": 3}}
+{"type": "relationship", "start": "user-28", "end": "grp-helpdesk", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-28", "end": "wkstn-25", "relType": "CAN_RDP", "properties": {"friction": 3}}
+{"type": "relationship", "start": "user-29", "end": "grp-security-audit", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-30", "end": "grp-security-audit", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-30", "end": "wkstn-15", "relType": "CAN_RDP", "properties": {"friction": 3}}
+{"type": "relationship", "start": "user-31", "end": "grp-workstation-admins", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-31", "end": "wkstn-13", "relType": "CAN_RDP", "properties": {"friction": 3}}
+{"type": "relationship", "start": "user-32", "end": "grp-security-audit", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-33", "end": "grp-finance", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-34", "end": "grp-workstation-admins", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-35", "end": "grp-security-audit", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "wkstn-17", "end": "user-35", "relType": "HAS_SESSION", "properties": {"friction": 2}}
+{"type": "relationship", "start": "user-36", "end": "grp-workstation-admins", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-36", "end": "wkstn-01", "relType": "CAN_RDP", "properties": {"friction": 3}}
+{"type": "relationship", "start": "user-37", "end": "grp-finance", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-38", "end": "grp-security-audit", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "wkstn-11", "end": "user-38", "relType": "HAS_SESSION", "properties": {"friction": 2}}
+{"type": "relationship", "start": "user-39", "end": "grp-cloud-engineers", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-40", "end": "grp-cloud-engineers", "relType": "MEMBER_OF", "properties": {"friction": 1}}
+{"type": "relationship", "start": "user-40", "end": "wkstn-10", "relType": "CAN_RDP", "properties": {"friction": 3}}
+{"type": "relationship", "start": "svc-sql-cluster", "end": "srv-app-sql", "relType": "RUNS_ON", "properties": {"friction": 2}}
+{"type": "relationship", "start": "svc-backup-exec", "end": "srv-backup", "relType": "RUNS_ON", "properties": {"friction": 2}}
+{"type": "relationship", "start": "sync-adfs-worker", "end": "srv-entra-connect", "relType": "RUNS_ON", "properties": {"friction": 2}}
+{"type": "relationship", "start": "spn-cloud-automation", "end": "tenant-corp-azure", "relType": "SYNCS_TO", "properties": {"friction": 2}}
+{"type": "relationship", "start": "srv-entra-connect", "end": "domain-corp-local", "relType": "SERVICES_LINK", "properties": {"friction": 2}}
+{"type": "relationship", "start": "dc-01-corp-local", "end": "domain-corp-local", "relType": "DOMAIN_TRUSTS", "properties": {"friction": 5}}
+{"type": "relationship", "start": "dc-02-corp-local", "end": "domain-corp-local", "relType": "DOMAIN_TRUSTS", "properties": {"friction": 5}}
