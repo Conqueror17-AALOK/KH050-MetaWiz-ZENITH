@@ -4,6 +4,25 @@
   "installCommand": "npm --prefix src/frontend install",
   "buildCommand": "npm --prefix src/frontend run build",
   "outputDirectory": "src/frontend/dist",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "X-Requested-With, Content-Type, Authorization, x-nvidia-api-key"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/",
