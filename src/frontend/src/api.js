@@ -1,6 +1,20 @@
 import axios from 'axios';
 
-const api = axios.create({ baseURL: 'http://localhost:4000/api' });
+// Resolve backend API URL:
+// 1. In production on Vercel, if VITE_API_URL is configured (e.g. https://zenith-backend.onrender.com),
+//    it directly calls the Render backend.
+// 2. If VITE_API_URL is not set, it defaults to relative '/api' (proxied by Vite in local dev
+//    or by vercel.json rewrites in production).
+const resolveBaseURL = () => {
+  const envUrl = import.meta.env?.VITE_API_URL;
+  if (envUrl && typeof envUrl === 'string' && envUrl.trim().length > 0) {
+    const cleaned = envUrl.trim().replace(/\/+$/, '');
+    return cleaned.endsWith('/api') ? cleaned : cleaned + '/api';
+  }
+  return '/api';
+};
+
+const api = axios.create({ baseURL: resolveBaseURL() });
 
 export const getGraph = (dataset = null) =>
   api.get('/graph', { params: dataset ? { dataset } : {} }).then((r) => r.data);
@@ -9,7 +23,7 @@ export const getPaths = (from, to, dataset = null) =>
   api.get('/paths', { params: { from, to, ...(dataset ? { dataset } : {}) } }).then((r) => r.data);
 
 export const getBlastRadius = (nodeId, dataset = null) =>
-  api.get(`/blast-radius/${nodeId}`, { params: dataset ? { dataset } : {} }).then((r) => r.data);
+  api.get('/blast-radius/' + encodeURIComponent(nodeId), { params: dataset ? { dataset } : {} }).then((r) => r.data);
 
 export const simulateRemediation = (from, to, excludeRelId, dataset = null) =>
   api.post('/simulate-remediation', { from, to, excludeRelId, ...(dataset ? { dataset } : {}) }).then((r) => r.data);
@@ -36,4 +50,3 @@ export const seedDefault = () =>
   api.post('/seed/default').then((r) => r.data);
 
 export default api;
-

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "cleanUrls": true,
+  "framework": "vite",
+  "buildCommand": "npm run build --prefix src/frontend",
+  "outputDirectory": "src/frontend/dist",
+  "rewrites": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "query",
+          "key": "console",
+          "value": "true"
+        }
+      ],
+      "destination": "/index.html"
+    },
+    {
+      "source": "/",
+      "destination": "/landing-page/index.html"
+    },
+    {
+      "source": "/console",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/landing",
+      "destination": "/landing-page/index.html"
+    },
+    {
+      "source": "/((?!landing-page|assets|.*\\..*).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
