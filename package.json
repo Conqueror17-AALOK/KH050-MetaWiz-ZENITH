@@ -12,9 +12,10 @@
     "test": "npm test --prefix src/backend",
     "test:adsynth": "npm run test:adsynth --prefix src/backend",
     "import:adsynth": "npm run import:adsynth --prefix src/backend",
-    "build": "npm --prefix src/backend ci --omit=dev && npm --prefix src/frontend ci --include=dev && npm --prefix src/frontend run build",
-    "build:frontend": "npm run build --prefix src/frontend",
-    "build:backend": "npm install --prefix src/backend"
+    "build": "npm --prefix src/frontend install && npm --prefix src/frontend run build",
+    "build:frontend": "npm --prefix src/frontend install && npm --prefix src/frontend run build",
+    "build:backend": "npm install --prefix src/backend",
+    "install:frontend": "npm --prefix src/frontend install"
   },
   "keywords": [
     "cybersecurity",
@@ -28,5 +29,9 @@
     "mitre-att-ck"
   ],
   "author": "ZENITH Contributors",
-  "license": "MIT"
+  "license": "MIT",
+  "workspaces": [
+    "src/frontend",
+    "src/backend"
+  ]
 }
